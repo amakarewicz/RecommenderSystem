@@ -3,7 +3,7 @@ import html
 import numpy as np
 
 def parse_content(content):
-    if (content is not None or content != ""):
+    if (content is not np.nan):
         soup = BeautifulSoup(content, 'html.parser')
         paragraphs = soup.find_all("p", {"data-component": "paragraph"})
 
