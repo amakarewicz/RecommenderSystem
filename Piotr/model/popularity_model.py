@@ -68,7 +68,7 @@ class Popularity_model_wt_author(Popularity_model):
         '''metoda recomm dla przypadku <user in database>'''
         user_articles = user_db[user_db['id'] == user].iloc[:,1].tolist()   # artykuły przeczytane
         authors = art_db[art_db['nzz_id'].isin(user_articles)]['author']    # autorzy przeczytanych art
-        duplicated = (list(authors.value_counts()[authors.value_counts()>1].index)) # autorzy czytani > 1 raz
+        duplicated = (list(authors.value_counts()[authors.value_counts()>1].index)) # autorzy czytani > 1
         if 'Unknown' in duplicated:     # wyrzucanie nieznanego autora
             duplicated.pop(duplicated.index('Unknown'))
 
