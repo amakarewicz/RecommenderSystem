@@ -1,3 +1,4 @@
 Kamil/data
 /data_ignored
 *.log
+/Piotr/model/__pycache__
