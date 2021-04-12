@@ -9,6 +9,13 @@ if __name__ == "__main__":
     user_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\readers.csv')
 
     # print(user_db.iloc[:,0])
-    User1 = Popularity(-3,articles_db=art_db,user_db=user_db)
-    print(User1.head(User1.user_db))
+    # x = user_db[user_db['art_id'] == '1.18108994']
+    # print(x)
+    # x = x.iloc[:,1].tolist()
+    # print(user_db[user_db['id'] == 3].iloc[:,1].tolist())
+    User1 = Popularity(user_id=2,articles_db=art_db,user_db=user_db,art_limit=8)
+    User2 = Popularity(user_id=-3,articles_db=art_db,user_db=user_db,art_limit=8)
+    User3 = Popularity(user_id=2,articles_db=art_db,art_limit=2)
     print(User1.reccom())
+    print(User2.reccom())
+    print(User3.reccom())
