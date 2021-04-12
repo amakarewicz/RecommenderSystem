@@ -24,7 +24,10 @@ class Popularity_model:
     
     @staticmethod
     def select_if_no_userdb(art_db,limit):
-        pass
+        '''metoda recomm dla przypadku <user not in database>'''
+        selected = art_db.sort_values(by='popularity',ascending=False).head(limit)[['nzz_id']]
+        recommended = [item[0] for item in selected.values.tolist()]
+        return recommended
 
     @staticmethod
     def select_if_userdb(art_db, user_db, user, limit):
@@ -45,12 +48,6 @@ class Popularity_model:
 
 class Popularity_model_wo_author(Popularity_model):
     '''przypadek bez uwzględnienia autora'''
-    @staticmethod
-    def select_if_no_userdb(art_db,limit):
-        '''metoda recomm dla przypadku <user not in database>'''
-        selected = art_db.sort_values(by='popularity',ascending=False).head(limit)[['nzz_id']]
-        recommended = [item[0] for item in selected.values.tolist()]
-        return recommended
 
     @staticmethod
     def select_if_userdb(art_db, user_db, user, limit):
@@ -65,21 +62,17 @@ class Popularity_model_wo_author(Popularity_model):
 
 class Popularity_model_wt_author(Popularity_model):
     '''przypadek z uwzględnieniem autora'''
-    @staticmethod
-    def select_if_no_userdb(art_db,limit):
-        '''metoda recomm dla przypadku <user not in database>'''
-        selected = art_db.sort_values(by='popularity',ascending=False).head(limit)[['nzz_id']]
-        recommended = [item[0] for item in selected.values.tolist()]
-        return recommended
 
     @staticmethod
     def select_if_userdb(art_db, user_db, user, limit):
         '''metoda recomm dla przypadku <user in database>'''
         user_articles = user_db[user_db['id'] == user].iloc[:,1].tolist()   # artykuły przeczytane
+        authors = art_db[art_db['nzz_id'].isin(user_articles)]['author']    # autorzy przeczytanych art
+        duplicated = (list(authors.value_counts()[authors.value_counts()>1].index)) # autorzy czytani > 1 raz
+        if 'Unknown' in duplicated:     # wyrzucanie nieznanego autora
+            duplicated.pop(duplicated.index('Unknown'))
 
-        for item in user_articles:
-            print(item)
         # selected = art_db.sort_values(by='popularity',ascending=False) \
         #            .head(limit + len(user_articles))[['nzz_id']].values.tolist()
         # recommended = [item[0] for item in selected if item[0] not in user_articles][:limit]    # wyrzucam powtórki
-        return None
+        return duplicated
