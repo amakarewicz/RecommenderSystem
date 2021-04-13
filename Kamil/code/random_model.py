@@ -5,7 +5,7 @@ class RandomModel:
 
     MODEL_NAME = "random_model"
 
-    def __init__(self, random_state):
+    def __init__(self, random_state=None):
         self.random_state = random_state
 
     def get_model_name(self):
