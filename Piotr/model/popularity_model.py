@@ -46,6 +46,7 @@ class Popularity_model:
             '''przypadek zaimplementowanej bazy użytkownikow, użytkownik jest w bazie'''
         return self.recommended
 
+
 class Popularity_model_wo_author(Popularity_model):
     '''przypadek bez uwzględnienia autora'''
 
