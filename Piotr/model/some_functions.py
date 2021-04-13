@@ -32,7 +32,7 @@ def choose_recomm(models_recommendations,ratio,limit):
         if len(recommendations) != len(set(recommendations)):
             # wyrzucenie powtórek
             recommendations = [it for it in set(recommendations)]
-        print(models_recommendations)
+        # print(models_recommendations)
     return recommendations
         
 
