@@ -15,8 +15,9 @@ class RandomModel:
         self.articles = articles
         # Ten model nie potrzebuje trenowania
 
-    def recommend(self, topn, verbose=False):
-        recommendations_df = self.articles.sample(topn, random_state=self.random_state)
+    def recommend(self, user_id=None, articles_to_ignore=[], topn=10, verbose=False):
+        recommendations_df = self.articles[~self.articles["nzz_id"].isin(articles_to_ignore)]
+        recommendations_df = recommendations_df.sample(topn, random_state=self.random_state)
 
         if not verbose:
             recommendations_df = recommendations_df[["nzz_id"]]
