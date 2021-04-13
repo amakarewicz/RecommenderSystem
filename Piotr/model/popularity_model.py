@@ -63,7 +63,7 @@ class Popularity_model_wo_author(Popularity_model):
 
 class Popularity_model_wt_author(Popularity_model):
     '''przypadek z uwzględnieniem autora'''
-
+ 
     @staticmethod
     def select_if_userdb(art_db, user_db, user, limit):
         '''metoda recomm dla przypadku <user in database>'''
