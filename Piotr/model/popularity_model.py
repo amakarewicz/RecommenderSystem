@@ -1,4 +1,4 @@
-from some_functions import get_db
+from some_functions import get_db, choose_recomm
 import pandas as pd
 
 class Popularity_model:
@@ -17,7 +17,7 @@ class Popularity_model:
         self.articles = articles_db
         # self.limit=art_limit
         self.user_db=user_db
-        self.recommended = None
+        self.recommended = []
     
     def head(self,db):
         return db.head()
@@ -31,7 +31,13 @@ class Popularity_model:
 
     @staticmethod
     def select_if_userdb(art_db, user_db, user, limit):
-        pass
+        '''metoda recomm dla przypadku <user in database>'''
+        user_articles = user_db[user_db['id'] == user].iloc[:,1].tolist()
+        selected = art_db.sort_values(by='popularity',ascending=False) \
+                   .head(limit + len(user_articles))[['nzz_id']].values.tolist()
+
+        recommended = [item[0] for item in selected if item[0] not in user_articles][:limit]    # wyrzucam powtórki
+        return recommended
 
     def recomm(self, limit):
         '''wyniki systemu rekondacji (lista <limit> wyników)'''
@@ -42,37 +48,55 @@ class Popularity_model:
             '''przypadek zaimplementowanej bazy użytkowników, użytkownik nie jest w bazie'''
             self.recommended = self.select_if_no_userdb(self.articles, limit)
         else:
-            self.recommended = self.select_if_userdb(self.articles, self.user_db, self.user, limit)
             '''przypadek zaimplementowanej bazy użytkownikow, użytkownik jest w bazie'''
+            self.recommended = self.select_if_userdb(self.articles, self.user_db, self.user, limit)
+
         return self.recommended
 
-class Popularity_model_wo_author(Popularity_model):
-    '''przypadek bez uwzględnienia autora'''
 
-    @staticmethod
-    def select_if_userdb(art_db, user_db, user, limit):
-        '''metoda recomm dla przypadku <user in database>'''
-        user_articles = user_db[user_db['id'] == user].iloc[:,1].tolist()
-        selected = art_db.sort_values(by='popularity',ascending=False) \
-                   .head(limit + len(user_articles))[['nzz_id']].values.tolist()
-
-        recommended = [item[0] for item in selected if item[0] not in user_articles][:limit]    # wyrzucam powtórki
-        return recommended
-
-
-class Popularity_model_wt_author(Popularity_model):
+class Popularity_model_author(Popularity_model):
     '''przypadek z uwzględnieniem autora'''
-
+ 
     @staticmethod
     def select_if_userdb(art_db, user_db, user, limit):
         '''metoda recomm dla przypadku <user in database>'''
         user_articles = user_db[user_db['id'] == user].iloc[:,1].tolist()   # artykuły przeczytane
-        authors = art_db[art_db['nzz_id'].isin(user_articles)]['author']    # autorzy przeczytanych art
-        duplicated = (list(authors.value_counts()[authors.value_counts()>1].index)) # autorzy czytani > 1
-        if 'Unknown' in duplicated:     # wyrzucanie nieznanego autora
-            duplicated.pop(duplicated.index('Unknown'))
+        authors = art_db[art_db['nzz_id'].isin(user_articles)]['author']    # dep. przeczytanych art
+        ratio = tuple(authors.value_counts()[authors.value_counts()>1])  # ratio do późniejszego wyboru
+        index = list(authors.value_counts()[authors.value_counts()>1].index) # index odpowiadający ratio
 
-        # selected = art_db.sort_values(by='popularity',ascending=False) \
-        #            .head(limit + len(user_articles))[['nzz_id']].values.tolist()
-        # recommended = [item[0] for item in selected if item[0] not in user_articles][:limit]    # wyrzucam powtórki
-        return duplicated
+        if len(ratio) == 0: #brak powtórek
+            return []
+        recomm_for_each = []
+        for item in index:
+            selected = list(art_db[art_db['author'] == item].sort_values(by='popularity',ascending=False) \
+                    .head(limit + len(user_articles))['nzz_id'])
+            # dodanie tych, które nie zostaly przeczytane
+            recomm_for_each.append([item for item in selected if item not in user_articles])  
+        # wybieram z prawdopodobiństwem (wybrane przeczytane)/(wszystkie przeczytane) artykuły
+        recommended = choose_recomm(recomm_for_each,ratio,limit)
+        return recommended
+
+
+class Popularity_model_department(Popularity_model):
+    '''przypadek z uwzględnieniem działu'''
+ 
+    @staticmethod
+    def select_if_userdb(art_db, user_db, user, limit):
+        '''metoda recomm dla przypadku <user in database>'''
+        user_articles = user_db[user_db['id'] == user].iloc[:,1].tolist()   # artykuły przeczytane
+        departs = art_db[art_db['nzz_id'].isin(user_articles)]['department']    # dep. przeczytanych art
+        ratio = tuple(departs.value_counts()[departs.value_counts()>1])  # ratio do późniejszego wyboru
+        index = list(departs.value_counts()[departs.value_counts()>1].index)
+        # print(departs.value_counts()[departs.value_counts()>1])
+        if len(ratio) == 0: #brak powtarzających się schematów
+            return []
+        recomm_for_each = []
+        for item in index:
+            selected = list(art_db[art_db['department'] == item].sort_values(by='popularity',ascending=False) \
+                    .head(limit + len(user_articles))['nzz_id'])
+            # dodanie tych, które nie zostaly przeczytane
+            recomm_for_each.append([item for item in selected if item not in user_articles])  
+        # wybieram z prawdopodobiństwem (wybrane przeczytane)/(wszystkie przeczytane) artykuły
+        recommended = choose_recomm(recomm_for_each,ratio,limit)
+        return recommended
