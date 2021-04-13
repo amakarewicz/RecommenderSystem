@@ -17,7 +17,7 @@ class RandomModel:
 
     def recommend(self, user_id=None, articles_to_ignore=[], topn=10, verbose=False):
         recommendations_df = self.articles[~self.articles["nzz_id"].isin(articles_to_ignore)]
-        recommendations_df = recommendations_df.sample(topn, random_state=self.random_state)
+        recommendations_df = recommendations_df.sample(frac=1, random_state=self.random_state).head(topn)
 
         if not verbose:
             recommendations_df = recommendations_df[["nzz_id"]]
