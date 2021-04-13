@@ -46,6 +46,7 @@ class Popularity_model:
             '''przypadek zaimplementowanej bazy użytkownikow, użytkownik jest w bazie'''
         return self.recommended
 
+
 class Popularity_model_wo_author(Popularity_model):
     '''przypadek bez uwzględnienia autora'''
 
@@ -69,10 +70,10 @@ class Popularity_model_wt_author(Popularity_model):
         user_articles = user_db[user_db['id'] == user].iloc[:,1].tolist()   # artykuły przeczytane
         authors = art_db[art_db['nzz_id'].isin(user_articles)]['author']    # autorzy przeczytanych art
         duplicated = (list(authors.value_counts()[authors.value_counts()>1].index)) # autorzy czytani > 1
+        
         if 'Unknown' in duplicated:     # wyrzucanie nieznanego autora
             duplicated.pop(duplicated.index('Unknown'))
-
-        # selected = art_db.sort_values(by='popularity',ascending=False) \
-        #            .head(limit + len(user_articles))[['nzz_id']].values.tolist()
-        # recommended = [item[0] for item in selected if item[0] not in user_articles][:limit]    # wyrzucam powtórki
-        return duplicated
+        selected = art_db[art_db['author'].isin(duplicated)].sort_values(by='popularity',ascending=False) \
+                .head(limit + len(user_articles))[['nzz_id']].values.tolist()
+        recommended = [item[0] for item in selected if item[0] not in user_articles][:limit]    # wyrzucam powtórki
+        return recommended
