@@ -56,8 +56,7 @@ class CFModel:
                 ~sorted_user_predictions["nzz_id"].isin(articles_to_ignore)
             ]
             .sort_values("recommendation_strength", ascending=False)
-            .head(topn)
-        )
+        ).head(topn)
 
         if verbose:
             if self.articles is None:
