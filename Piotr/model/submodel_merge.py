@@ -8,6 +8,7 @@ def submodel_merge(user_id,art_db,limit=10,user_db=None):
     User_d = Popularity_model_department(user_id=user_id,articles_db=art_db,user_db=user_db)
     all_recommendations = []
     ratio = []
+    # można dodać dodatkowe wagi dla submodeli w tym miejscu
     for u in [User,User_a,User_d]:
         rec, ev = u.recomm(limit=limit)
         all_recommendations.append(rec)
