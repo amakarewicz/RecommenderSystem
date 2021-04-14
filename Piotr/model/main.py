@@ -25,7 +25,7 @@ if __name__ == "__main__":
         print(k)
         Usera = Popularity_model_author(user_id=k,articles_db=art_db,user_db=user_db)
         # Userd = Popularity_model(user_id=k,articles_db=art_db,user_db=user_db)
-        rec, ev = Usera.recomm(limit=8)
+        rec, ev = Usera.recomm(limit=100)
         # rec2, ev2 = Userd.recomm(limit=8)
         l.append([len(rec),ev])
     print(l)
