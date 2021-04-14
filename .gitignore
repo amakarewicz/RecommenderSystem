@@ -2,4 +2,7 @@ Kamil/data
 Kamil/code/__pycache__
 /data_ignored
 *.log
-/Piotr/model/__pycache__
+Piotr/model/__pycache__
+*.pyc
+Piotr/model/__pycache__/some_functions.cpython-39.pyc
+Piotr/model/__pycache__/popularity_model.cpython-39.pyc
