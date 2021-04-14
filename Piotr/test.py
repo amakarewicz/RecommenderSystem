@@ -14,3 +14,6 @@ def evaluation(ratio):
 print(evaluation(a))
 print(evaluation(b))
 print(evaluation(c))
+
+x= [[],[1,1],[2,2,2]]
+print([sit for sit in it for it in x])

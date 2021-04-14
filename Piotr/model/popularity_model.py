@@ -44,7 +44,7 @@ class Popularity_model:
         if self.user_db is None:
             '''przypadek bez zaimplementowanej bazy użytkowników'''
             self.recommended, ev = self.select_if_no_userdb(self.articles, limit)
-        elif self.user not in self.user_db.iloc[:,0]:
+        elif self.user not in self.user_db.id.values:
             '''przypadek zaimplementowanej bazy użytkowników, użytkownik nie jest w bazie'''
             self.recommended, ev = self.select_if_no_userdb(self.articles, limit)
         else:
@@ -66,15 +66,17 @@ class Popularity_model_author(Popularity_model):
 
         ratio = tuple(dupl)  # ratio do późniejszego wyboru
         index = list(dupl.index) # index odpowiadający ratio
-        # print(dupl)
+
         if len(ratio) == 0: #brak powtórek
-            return []
+            return [], 0
+
         recomm_for_each = []
         for item in index:
             selected = list(art_db[art_db['author'] == item].sort_values(by='popularity',ascending=False) \
                     .head(limit + len(user_articles))['nzz_id'])
             # dodanie tych, które nie zostaly przeczytane
             recomm_for_each.append([item for item in selected if item not in user_articles])  
+            
         # wybieram z prawdopodobiństwem (wybrane przeczytane)/(wszystkie przeczytane) artykuły
         recommended = choose_recomm(recomm_for_each,ratio,limit)
         ev = evaluation(ratio)
@@ -95,7 +97,7 @@ class Popularity_model_department(Popularity_model):
         index = list(dupl.index) # index odpowiadający ratio
         # print(dupl)
         if len(ratio) == 0: #brak powtarzających się schematów
-            return []
+            return [], 0
         recomm_for_each = []
         for item in index:
             selected = list(art_db[art_db['department'] == item].sort_values(by='popularity',ascending=False) \
