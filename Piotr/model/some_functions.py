@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-
+from math import sqrt
 
 def get_db(filename):
     return pd.read_csv(filename)
@@ -13,6 +13,10 @@ def prob_vector_from_ratio(ratio):
     vect = np.cumsum(ratio)/sum(ratio)
     return vect
 
+def evaluation(ratio):
+    # sqrt(sum(r^2))
+    se = sqrt(sum( [(it - 1)**2 for it in ratio]))
+    return se
 
 def choose_recomm(models_recommendations,ratio,limit):
     ''' dla wybranych rekomendacji z modeli wybieramy wg prawdopodobieństwa wyniki z każdego setu
