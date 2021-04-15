@@ -27,7 +27,7 @@ class Popularity_model:
         '''metoda recomm dla przypadku <user not in database>'''
         selected = art_db.sort_values(by='popularity',ascending=False).head(limit)[['nzz_id']]
         recommended = [item[0] for item in selected.values.tolist()]
-        return recommended, 1
+        return recommended, [], 1
 
     @staticmethod
     def select_if_userdb(art_db, user_db, user, limit):
@@ -36,22 +36,22 @@ class Popularity_model:
         selected = art_db.sort_values(by='popularity',ascending=False) \
                    .head(limit + len(user_articles))[['nzz_id']].values.tolist()
 
-        recommended = [item[0] for item in selected if item[0] not in user_articles][:limit]    # wyrzucam powtórki
-        return recommended, 1
+        recommended = [item[0] for item in selected][:limit]    # wyrzucam powtórki
+        return recommended, user_articles, 1
 
     def recomm(self, limit):
         '''wyniki systemu rekondacji (lista <limit> wyników)'''
         if self.user_db is None:
             '''przypadek bez zaimplementowanej bazy użytkowników'''
-            self.recommended, ev = self.select_if_no_userdb(self.articles, limit)
+            self.recommended, user_articles, ev = self.select_if_no_userdb(self.articles, limit)
         elif self.user not in self.user_db.id.values:
             '''przypadek zaimplementowanej bazy użytkowników, użytkownik nie jest w bazie'''
-            self.recommended, ev = self.select_if_no_userdb(self.articles, limit)
+            self.recommended, user_articles, ev = self.select_if_no_userdb(self.articles, limit)
         else:
             '''przypadek zaimplementowanej bazy użytkownikow, użytkownik jest w bazie'''
-            self.recommended, ev = self.select_if_userdb(self.articles, self.user_db, self.user, limit)
+            self.recommended, user_articles, ev = self.select_if_userdb(self.articles, self.user_db, self.user, limit)
 
-        return self.recommended, ev
+        return self.recommended, user_articles, ev
 
 
 class Popularity_model_author(Popularity_model):
@@ -75,12 +75,12 @@ class Popularity_model_author(Popularity_model):
             selected = list(art_db[art_db['author'] == item].sort_values(by='popularity',ascending=False) \
                     .head(limit + len(user_articles))['nzz_id'])
             # dodanie tych, które nie zostaly przeczytane
-            recomm_for_each.append([item for item in selected if item not in user_articles])  
+            recomm_for_each.append([item for item in selected])  
             
         # wybieram z prawdopodobiństwem (wybrane przeczytane)/(wszystkie przeczytane) artykuły
         recommended = choose_recomm(recomm_for_each,ratio,limit)
         ev = evaluation(ratio)
-        return recommended, ev
+        return recommended, user_articles, ev
 
 
 class Popularity_model_department(Popularity_model):
@@ -103,8 +103,8 @@ class Popularity_model_department(Popularity_model):
             selected = list(art_db[art_db['department'] == item].sort_values(by='popularity',ascending=False) \
                     .head(limit + len(user_articles))['nzz_id'])
             # dodanie tych, które nie zostaly przeczytane
-            recomm_for_each.append([item for item in selected if item not in user_articles])  
+            recomm_for_each.append([item for item in selected])  
         # wybieram z prawdopodobiństwem (wybrane przeczytane)/(wszystkie przeczytane) artykuły
         recommended = choose_recomm(recomm_for_each,ratio,limit)
         ev = evaluation(ratio)
-        return recommended, ev
+        return recommended, user_articles, ev
