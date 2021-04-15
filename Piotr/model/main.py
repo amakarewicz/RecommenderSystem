@@ -20,6 +20,8 @@ if __name__ == "__main__":
     # users = [User1, User1a, User1d, User2, User3]
     # for User in users:
     #     print(f'{str(User)[18:-30]}\n user ID: {User.user}\n {len(User.recomm(limit=8)[0])} recommendations:\n{User.recomm(limit=8)}\n')
+    
+    #       zbadanie dla calego db uzytkownikow
     l = []
     for k in range(-1,1003):
         print(k)
