@@ -8,8 +8,8 @@ testing output data:
 model        | user            | number_of_recomm | user articles | precision | recall    | model_ev
 --------------------------------------------------------------------------------------------------------
 popularity   | 0 (not in base) | 1 to 20          | number of     | from      | from      | from
-author_p     | 1 to 1000       |                  | read          | 0 to 1    | 0 to 1    | 1 to ... 
-department_p | ...             | ...              | articles      | or NaN    | or NaN    |
+author_p     | 1 to 1000       | lower than 20 if | read          | 0 to 1    | 0 to 1    | 1 to ... 
+department_p | ...             | it's models max  | articles      | or NaN    | or NaN    |
 
 
 example:
