@@ -4,3 +4,5 @@ Kamil/code/__pycache__
 *.log
 Piotr/model/__pycache__
 *.pyc
+.vscode
+__pycache__

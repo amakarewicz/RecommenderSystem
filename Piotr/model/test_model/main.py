@@ -32,6 +32,8 @@ if __name__ == "__main__":
     #     l.append([len(rec),ev])
     # print(l)
 
+
+    
     User1 = Popularity_model(user_id=8,articles_db=art_db,user_db=user_db).recomm(10)
     print(precision(User1[0],User1[1]))
     print(recall(User1[0],User1[1]))
