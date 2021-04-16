@@ -68,7 +68,7 @@ class Popularity_model_author(Popularity_model):
         index = list(dupl.index) # index odpowiadający ratio
 
         if len(ratio) == 0: #brak powtórek
-            return [], 0
+            return [], [], 0
 
         recomm_for_each = []
         for item in index:
@@ -97,7 +97,7 @@ class Popularity_model_department(Popularity_model):
         index = list(dupl.index) # index odpowiadający ratio
         # print(dupl)
         if len(ratio) == 0: #brak powtarzających się schematów
-            return [], 0
+            return [], [], 0
         recomm_for_each = []
         for item in index:
             selected = list(art_db[art_db['department'] == item].sort_values(by='popularity',ascending=False) \

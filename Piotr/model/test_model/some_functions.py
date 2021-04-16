@@ -47,10 +47,15 @@ def choose_recomm(models_recommendations,ratio,limit):
         
 
 def precision(rec,user_data):
-    return len([i for i in rec if i in user_data])/len(rec)
+    if len(rec) != 0:
+        return len([i for i in rec if i in user_data]) / len(rec)
+    return np.nan
+
 
 def recall(rec,user_data):
-    return len([i for i in rec if i in user_data])/len(user_data)
+    if len(user_data) != 0:
+        return len([i for i in rec if i in user_data]) / len(user_data)
+    return np.nan
 
 if __name__ == "__main__":
     r = choose_recomm([[], ['ld.1290371', 'ld.144833', 'ld.1288152', 'ld.140939', 'ld.138429', 'ld.1289100']],(2,2),8)
