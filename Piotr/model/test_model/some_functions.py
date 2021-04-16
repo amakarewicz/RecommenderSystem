@@ -47,13 +47,13 @@ def choose_recomm(models_recommendations,ratio,limit):
         
 
 def precision(rec,user_data):
-    if len(rec) != 0:
+    if len(user_data) != 0 and len(rec) != 0:
         return len([i for i in rec if i in user_data]) / len(rec)
     return np.nan
 
 
 def recall(rec,user_data):
-    if len(user_data) != 0:
+    if len(user_data) != 0 and len(rec) != 0:
         return len([i for i in rec if i in user_data]) / len(user_data)
     return np.nan
 
