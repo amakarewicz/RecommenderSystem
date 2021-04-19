@@ -34,7 +34,5 @@ if __name__ == "__main__":
 
 
     
-    User1 = Popularity_model(user_id=8,articles_db=art_db,user_db=user_db).recomm(10)
-    print(precision(User1[0],User1[1]))
-    print(recall(User1[0],User1[1]))
-    print(User1[2])
+    User1 = Popularity_model(articles_db=art_db,user_db=user_db).recomm(user=2, limit=5)
+    print(User1.head())

@@ -2,20 +2,10 @@ from some_functions import get_db, choose_recomm, evaluation
 import pandas as pd
 
 class Popularity_model:
-    '''
-    Popularity object contains list of <art limit > 
-    recommended articles based on user and articles database
-    :param user_id: user id
-    :type arg: int
-    :param articles_db: user database
-    :type arg: pandas table
-    :param art_limit: number of reccomended articles
-    :type arg: int
-    '''
-    def __init__(self,user_id,articles_db,user_db=None):
-        self.user = user_id
+
+    def __init__(self,articles_db,user_db=None):
+        # model przystosowany do testowania Kamila, user w recomm, nie w init
         self.articles = articles_db
-        # self.limit=art_limit
         self.user_db=user_db
         self.recommended = []
     
@@ -27,7 +17,7 @@ class Popularity_model:
         '''metoda recomm dla przypadku <user not in database>'''
         selected = art_db.sort_values(by='popularity',ascending=False).head(limit)[['nzz_id']]
         recommended = [item[0] for item in selected.values.tolist()]
-        return recommended, [], 1
+        return recommended
 
     @staticmethod
     def select_if_userdb(art_db, user_db, user, limit):
@@ -37,21 +27,21 @@ class Popularity_model:
                    .head(limit + len(user_articles))[['nzz_id']].values.tolist()
 
         recommended = [item[0] for item in selected][:limit]    # wyrzucam powtórki
-        return recommended, user_articles, 1
+        return recommended
 
-    def recomm(self, limit):
+    def recomm(self, user, limit):
         '''wyniki systemu rekondacji (lista <limit> wyników)'''
         if self.user_db is None:
             '''przypadek bez zaimplementowanej bazy użytkowników'''
-            self.recommended, user_articles, ev = self.select_if_no_userdb(self.articles, limit)
-        elif self.user not in self.user_db.id.values:
+            self.recommended = self.select_if_no_userdb(self.articles, limit)
+        elif user not in self.user_db.id.values:
             '''przypadek zaimplementowanej bazy użytkowników, użytkownik nie jest w bazie'''
-            self.recommended, user_articles, ev = self.select_if_no_userdb(self.articles, limit)
+            self.recommended = self.select_if_no_userdb(self.articles, limit)
         else:
             '''przypadek zaimplementowanej bazy użytkownikow, użytkownik jest w bazie'''
-            self.recommended, user_articles, ev = self.select_if_userdb(self.articles, self.user_db, self.user, limit)
-
-        return self.recommended, user_articles, ev
+            self.recommended = self.select_if_userdb(self.articles, self.user_db, user, limit)
+        db = pd.DataFrame(self.recommended,columns=['nzz_id'])
+        return db
 
 
 class Popularity_model_author(Popularity_model):
@@ -68,7 +58,7 @@ class Popularity_model_author(Popularity_model):
         index = list(dupl.index) # index odpowiadający ratio
 
         if len(ratio) == 0: #brak powtórek
-            return [], user_articles, 0
+            return []
 
         recomm_for_each = []
         for item in index:
@@ -79,8 +69,8 @@ class Popularity_model_author(Popularity_model):
             
         # wybieram z prawdopodobiństwem (wybrane przeczytane)/(wszystkie przeczytane) artykuły
         recommended = choose_recomm(recomm_for_each,ratio,limit)
-        ev = evaluation(ratio)
-        return recommended, user_articles, ev
+        # ev = evaluation(ratio)
+        return recommended
 
 
 class Popularity_model_department(Popularity_model):
@@ -97,7 +87,7 @@ class Popularity_model_department(Popularity_model):
         index = list(dupl.index) # index odpowiadający ratio
         # print(dupl)
         if len(ratio) == 0: #brak powtarzających się schematów
-            return [], user_articles, 0
+            return []
         recomm_for_each = []
         for item in index:
             selected = list(art_db[art_db['department'] == item].sort_values(by='popularity',ascending=False) \
@@ -106,5 +96,5 @@ class Popularity_model_department(Popularity_model):
             recomm_for_each.append([item for item in selected])  
         # wybieram z prawdopodobiństwem (wybrane przeczytane)/(wszystkie przeczytane) artykuły
         recommended = choose_recomm(recomm_for_each,ratio,limit)
-        ev = evaluation(ratio)
-        return recommended, user_articles, ev
+        # ev = evaluation(ratio)
+        return recommended
