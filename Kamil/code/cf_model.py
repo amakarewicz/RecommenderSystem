@@ -69,7 +69,7 @@ class CFModel:
                     "recommendation_strength",
                     "nzz_id",
                     "catchline",
-                    "content",
+                    "paragraph",
                     "department",
                     "lead_text",
                     "pub_date",
