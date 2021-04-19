@@ -57,50 +57,50 @@ class ModelEvaluator:
         hit = int(index in range(0, topn))
         return hit, index
 
-    def _get_coverage(self, predicted, catalog):
-        predicted_flattened = [p for sublist in predicted for p in sublist]
-        unique_predictions = len(set(predicted_flattened))
-        prediction_coverage = round(unique_predictions/(len(catalog)* 1.0)*100,2)
-        return prediction_coverage
+    #def _get_coverage(self, predicted, catalog):
+    #    predicted_flattened = [p for sublist in predicted for p in sublist]
+    #    unique_predictions = len(set(predicted_flattened))
+    #    prediction_coverage = round(unique_predictions/(len(catalog)* 1.0)*100,2)
+    #    return prediction_coverage
 
-    def _get_personalization(self, predicted):
-        """
-        Personalization measures recommendation similarity across users.
-        A high score indicates good personalization (user's lists of recommendations are different).
-        A low score indicates poor personalization (user's lists of recommendations are very similar).
-        A model is "personalizing" well if the set of recommendations for each user is different.
-        Parameters:
-        ----------
-        predicted : a list of lists
-            Ordered predictions
-            example: [['X', 'Y', 'Z'], ['X', 'Y', 'Z']]
-        Returns:
-        -------
-            The personalization score for all recommendations.
-        """
-
-        def make_rec_matrix(predicted):
-            df = pd.DataFrame(data=predicted).reset_index().melt(
-                id_vars='index', value_name='item',
-            )
-            df = df[['index', 'item']].pivot(index='index', columns='item', values='item')
-            df = pd.notna(df)*1
-            rec_matrix = sp.csr_matrix(df.values)
-            return rec_matrix
-
-        #create matrix for recommendations
-        predicted = np.array(predicted)
-        rec_matrix_sparse = make_rec_matrix(predicted)
-
-        #calculate similarity for every user's recommendation list
-        similarity = cosine_similarity(X=rec_matrix_sparse, dense_output=False)
-
-        #get indicies for upper right triangle w/o diagonal
-        upper_right = np.triu_indices(similarity.shape[0], k=1)
-
-        #calculate average similarity
-        personalization = np.mean(similarity[upper_right])
-        return 1-personalization
+    #def _get_personalization(self, predicted):
+    #    """
+    #    Personalization measures recommendation similarity across users.
+    #    A high score indicates good personalization (user's lists of recommendations are different).
+    #    A low score indicates poor personalization (user's lists of recommendations are very similar).
+    #    A model is "personalizing" well if the set of recommendations for each user is different.
+    #    Parameters:
+    #    ----------
+    #    predicted : a list of lists
+    #        Ordered predictions
+    #        example: [['X', 'Y', 'Z'], ['X', 'Y', 'Z']]
+    #    Returns:
+    #    -------
+    #        The personalization score for all recommendations.
+    #    """
+    #
+    #    def make_rec_matrix(predicted):
+    #        df = pd.DataFrame(data=predicted).reset_index().melt(
+    #            id_vars='index', value_name='item',
+    #        )
+    #        df = df[['index', 'item']].pivot(index='index', columns='item', values='item')
+    #        df = pd.notna(df)*1
+    #        rec_matrix = sp.csr_matrix(df.values)
+    #        return rec_matrix
+    #
+    #    #create matrix for recommendations
+    #    predicted = np.array(predicted)
+    #    rec_matrix_sparse = make_rec_matrix(predicted)
+    #
+    #    #calculate similarity for every user's recommendation list
+    #    similarity = cosine_similarity(X=rec_matrix_sparse, dense_output=False)
+    #
+    #    #get indicies for upper right triangle w/o diagonal
+    #    upper_right = np.triu_indices(similarity.shape[0], k=1)
+    #
+    #    #calculate average similarity
+    #    personalization = np.mean(similarity[upper_right])
+    #    return 1-personalization
     def _evaluate_model_for_user(self, model, person_id):
         # Getting the items in test set
         interacted_values_testset = self.interactions_test_indexed_df.loc[person_id]
@@ -156,13 +156,20 @@ class ModelEvaluator:
             precision_at_k = hits_at_k_count / (float(k) * float(interacted_items_count_testset))
             ndcg_at_k_score = sum(ndcg_scores_at_k_for_user) / len(ndcg_scores_at_k_for_user)
 
+            if precision_at_k + recall_at_k == 0:
+                # W niektórych przypadkach występuję dzielenie przez 0, dlatego zakładamy wtedy f1-score jako 0
+                f1_score_at_k = 0
+            else:
+                f1_score_at_k = 2 * (precision_at_k * recall_at_k) / (precision_at_k + recall_at_k)
+
             person_metrics[f"hits@{k}_count"] = hits_at_k_count
             person_metrics["interacted_count"] = interacted_items_count_testset
             person_metrics[f"recall@{k}"] = recall_at_k
             person_metrics[f"precision@{k}"] = precision_at_k
+            person_metrics[f"f1_score@{k}"] = f1_score_at_k
             person_metrics[f"ndcg@{k}"] = ndcg_at_k_score
 
-        return person_metrics, person_recs_df
+        return person_metrics
 
     def evaluate_model(self, model, readers, readers_train, readers_test):
         # Indexing by personId to speed up the searches during evaluation
@@ -173,14 +180,13 @@ class ModelEvaluator:
 
         # print('Running evaluation for users')
         people_metrics = []
-        all_recs_at_5 = []
-        all_recs_at_10 = []
+
         for idx, person_id in enumerate(
             list(self.interactions_test_indexed_df.index.unique().values)
         ):
             # if idx % 100 == 0 and idx > 0:
             #    print('%d users processed' % idx)
-            person_metrics, person_recs_df = self._evaluate_model_for_user(model, person_id)
+            person_metrics = self._evaluate_model_for_user(model, person_id)
             #all_recs_at_5.append(person_recs_df["nzz_id"].head(5).values)
             #all_recs_at_10.append(person_recs_df["nzz_id"].head(10).values)
             person_metrics["_person_id"] = person_id
@@ -196,10 +202,12 @@ class ModelEvaluator:
         for k in self.k_list:
             global_recall_at_k = detailed_results_df[f"recall@{k}"].mean()
             global_precision_at_k = detailed_results_df[f"precision@{k}"].mean()
+            global_f1_score_at_k = detailed_results_df[f"f1_score@{k}"].mean()
             global_ndcg_at_k = detailed_results_df[f"ndcg@{k}"].mean()
 
             global_metrics[f"recall@{k}"] = global_recall_at_k
             global_metrics[f"precision@{k}"] = global_precision_at_k
+            global_metrics[f"f1_score@{k}"] = global_f1_score_at_k
             global_metrics[f"ndcg@{k}"] = global_ndcg_at_k
 
         #coverage_at_5 = self._get_coverage(all_recs_at_5, self.interactions_train_indexed_df["nzz_id"].unique())
