@@ -48,7 +48,7 @@ class CFModel:
             .sort_values(ascending=False)
             .reset_index()
             .rename(columns={user_id: "recommendation_strength"})
-        )
+        ) 
 
         # Recommend the highest predicted rating movies that the user hasn't seen yet.
         recommendations_df = (
