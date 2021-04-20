@@ -6,8 +6,8 @@ class ContentBasedRecommender:
     
     MODEL_NAME = 'Content-Based'
     
-    def __init__(self, item_ids=None, items_df=None, user_profiles=None, matrix=None):
-        self.item_ids = item_ids
+    def __init__(self, items_df=None, user_profiles=None, matrix=None):
+        self.item_ids = items_df['nzz_id'].tolist()
         self.items_df = items_df
         self.user_profiles = user_profiles
         self.matrix = matrix
