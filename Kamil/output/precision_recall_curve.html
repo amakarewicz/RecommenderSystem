@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .error {
+        color: red;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega@5"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega-lite@4.8.1"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega-embed@6"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"view": {"continuousWidth": 400, "continuousHeight": 300}}, "data": {"name": "data-ba65d06a01410c6b01a81cb987a480b0"}, "mark": "line", "encoding": {"x": {"type": "quantitative", "field": "recall"}, "y": {"type": "quantitative", "field": "precision"}}, "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json", "datasets": {"data-ba65d06a01410c6b01a81cb987a480b0": [{"k": 1, "f1_score": 0.09735827664399092, "ndcg": 0.09735827664399091, "precision": 0.09735827664399091, "recall": 0.09735827664399091}, {"k": 2, "f1_score": 0.09184375337436562, "ndcg": 0.12207491400094268, "precision": 0.06888281503077422, "recall": 0.13776563006154843}, {"k": 3, "f1_score": 0.08849368318756073, "ndcg": 0.1434967298269485, "precision": 0.05899578879170715, "recall": 0.17698736637512147}, {"k": 4, "f1_score": 0.082314706835115, "ndcg": 0.15474669680692524, "precision": 0.05144669177194687, "recall": 0.20578676708778748}, {"k": 5, "f1_score": 0.07523067163373287, "ndcg": 0.1627851164753967, "precision": 0.04513840298023972, "recall": 0.22569201490119856}, {"k": 6, "f1_score": 0.07017446434356056, "ndcg": 0.1698116431788138, "precision": 0.04093510420041032, "recall": 0.24561062520246196}, {"k": 7, "f1_score": 0.06622681810819565, "ndcg": 0.17599720560883705, "precision": 0.037843896061826095, "recall": 0.2649072724327826}, {"k": 8, "f1_score": 0.06207824928913364, "ndcg": 0.1790318134020288, "precision": 0.03491901522513768, "recall": 0.2793521218011014}, {"k": 9, "f1_score": 0.05839536767087787, "ndcg": 0.18787090509093943, "precision": 0.03244187092826548, "recall": 0.29197683835438937}, {"k": 10, "f1_score": 0.05619481991930971, "ndcg": 0.18897472935682375, "precision": 0.030907150955620348, "recall": 0.30907150955620344}, {"k": 11, "f1_score": 0.053478431054961674, "ndcg": 0.19317982089881125, "precision": 0.02917005330270636, "recall": 0.32087058632977}, {"k": 12, "f1_score": 0.05143579776232838, "ndcg": 0.1982523017630208, "precision": 0.0278610571212612, "recall": 0.33433268545513445}, {"k": 13, "f1_score": 0.04844376185848489, "ndcg": 0.1979125757567042, "precision": 0.026085102539184172, "recall": 0.33910633300939425}, {"k": 14, "f1_score": 0.04619204189612352, "ndcg": 0.1998940888730655, "precision": 0.02474573673006618, "recall": 0.3464403142209264}, {"k": 15, "f1_score": 0.04510193958535796, "ndcg": 0.2008953658346671, "precision": 0.024054367778857576, "recall": 0.3608155166828636}, {"k": 16, "f1_score": 0.042995817374568875, "ndcg": 0.20635445917430273, "precision": 0.022841527980239716, "recall": 0.36546444768383546}, {"k": 17, "f1_score": 0.04147783716661268, "ndcg": 0.20547949667004803, "precision": 0.021958854970559653, "recall": 0.3733005344995141}, {"k": 18, "f1_score": 0.039935084309412984, "ndcg": 0.20774897661804226, "precision": 0.02107685005219019, "recall": 0.3793833009394234}, {"k": 19, "f1_score": 0.03889314058956916, "ndcg": 0.20984960541245504, "precision": 0.020470073994510084, "recall": 0.3889314058956916}, {"k": 20, "f1_score": 0.037528691748808365, "ndcg": 0.21030640358816624, "precision": 0.019702563168124392, "recall": 0.3940512633624878}]}};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div class="error" style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>

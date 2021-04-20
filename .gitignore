@@ -2,6 +2,7 @@ Kamil/data
 Kamil/code/__pycache__
 /data_ignored
 *.log
+/Piotr/model/__pycache__
 Piotr/model/__pycache__
 *.pyc
 .vscode
