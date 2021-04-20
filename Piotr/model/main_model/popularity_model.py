@@ -12,13 +12,17 @@ class Popularity_model:
     :param art_limit: number of reccomended articles
     :type arg: int
     '''
+    MODEL_NAME = "popularity"
     def __init__(self,user_id,articles_db,user_db=None):
         self.user = user_id
         self.articles = articles_db
         # self.limit=art_limit
         self.user_db=user_db
         self.recommended = []
-    
+
+    def get_model_name(self):
+        return self.MODEL_NAME
+
     def head(self,db):
         return db.head()
     
@@ -56,7 +60,8 @@ class Popularity_model:
 
 class Popularity_model_author(Popularity_model):
     '''przypadek z uwzględnieniem autora'''
- 
+    MODEL_NAME = "author"
+
     @staticmethod
     def select_if_userdb(art_db, user_db, user, limit):
         '''metoda recomm dla przypadku <user in database>'''
@@ -85,7 +90,7 @@ class Popularity_model_author(Popularity_model):
 
 class Popularity_model_department(Popularity_model):
     '''przypadek z uwzględnieniem działu'''
- 
+    MODEL_NAME = "popularity"
     @staticmethod
     def select_if_userdb(art_db, user_db, user, limit):
         '''metoda recomm dla przypadku <user in database>'''
@@ -95,7 +100,6 @@ class Popularity_model_department(Popularity_model):
         
         ratio = tuple(dupl)  # ratio do późniejszego wyboru
         index = list(dupl.index) # index odpowiadający ratio
-        # print(dupl)
         if len(ratio) == 0: #brak powtarzających się schematów
             return [], 0
         recomm_for_each = []
