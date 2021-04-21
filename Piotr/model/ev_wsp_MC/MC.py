@@ -28,7 +28,7 @@ model_evaluator = ModelEvaluator(k_list = [5, 10, 15])
 # merged model
 results = pd.DataFrame([],
         columns=['modelName',
-        'recall@5',
+        'recall@5', 
         ' precision@5',
         'f1_score@5',
         'ndcg@5',
@@ -82,7 +82,7 @@ while a<4:
                         'ndcg@15',
                         'weight'])
                 results = results.append(r1,ignore_index=True)
-                c += 1
+            c += 1
         b += 1    
     a+= 1
 results.to_csv("res.csv", encoding="utf-8", index=False)

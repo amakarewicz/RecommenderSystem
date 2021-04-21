@@ -42,10 +42,12 @@ def choose_recomm(models_recommendations,ratio,limit):
             if len(recommendations) != len(set(recommendations)):
                 # wyrzucenie powtórek
                 recommendations = [it for it in set(recommendations)]
-            # print(models_recommendations)
         return recommendations
         
 
 if __name__ == "__main__":
-    r = choose_recomm([[], ['ld.1290371', 'ld.144833', 'ld.1288152', 'ld.140939', 'ld.138429', 'ld.1289100']],(2,2),8)
+    r = choose_recomm([
+        ['1.18108994', 'ld.1086062', 'ld.153813', 'ld.140509', 'ld.137077', 'ld.150497', 'ld.137081', 'ld.150557'],
+        ['ld.155260', 'ld.139338', 'ld.1290435', 'ld.148526', 'ld.142559', 'ld.1290811', 'ld.139047', 'ld.1294764'],
+        ['ld.144297', 'ld.139916', 'ld.138179', 'ld.153622', 'ld.154109', 'ld.148355', 'ld.153589', 'ld.138751']],(1,3.61,8),8)
     print(r)
