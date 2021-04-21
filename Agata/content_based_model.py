@@ -6,14 +6,20 @@ class ContentBasedRecommender:
     
     MODEL_NAME = 'Content-Based'
     
-    def __init__(self, items_df=None, user_profiles=None, matrix=None):
+    def __init__(self, interactions = None, items_df=None, user_profiles=None, matrix=None):
         self.item_ids = items_df['nzz_id'].tolist()
         self.items_df = items_df
         self.user_profiles = user_profiles
         self.matrix = matrix
+        self.interactions = interactions.set_index('id')
         
     def get_model_name(self):
         return self.MODEL_NAME
+    
+    def get_read_articles(self,person_id):
+        # Get the user's data and merge in the article info
+        interacted_items = self.interactions.loc[person_id, 'art_id']
+        return set(interacted_items if type(interacted_items) == pd.Series else [interacted_items])
         
     def _get_similar_items_to_user_profile(self, person_id, topn=1000):
         #Computes the cosine similarity between the user profile and all item profiles
@@ -26,9 +32,11 @@ class ContentBasedRecommender:
         
     def recommend_items(self, user_id, items_to_ignore=[], topn=10, verbose=False):
         similar_items = self._get_similar_items_to_user_profile(user_id)
+        read_articles = self.get_read_articles(user_id)
         #Ignores items the user has already interacted
         similar_items_filtered = list(filter(lambda x: x[0] not in items_to_ignore, similar_items))
-        
+        similar_items_filtered = list(filter(lambda x: x[0] not in read_articles, similar_items_filtered))
+
         recommendations_df = pd.DataFrame(similar_items_filtered, columns=['art_id', 'recStrength']) \
                                     .head(topn)
 

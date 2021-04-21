@@ -75,7 +75,7 @@ class ModelEvaluator:
                           'interacted_count': interacted_items_count_testset,
                           'recall@5': recall_at_5,
                           'recall@10': recall_at_10}
-        return person_metrics, person_recs_df
+        return person_metrics
 
     def evaluate_model(self, model, articles, readers, interactions_train, interactions_test):
         # indexing to fasten the search
@@ -84,15 +84,12 @@ class ModelEvaluator:
         interactions_test_ind = interactions_test.set_index('id')
         #print('Running evaluation for users')
         people_metrics = []
-        people_recs = []
         for idx, person_id in enumerate(list(interactions_test_ind.index.unique().values)):
             #if idx % 100 == 0 and idx > 0:
             #    print('%d users processed' % idx)
-            person_metrics, person_recs_df = self.evaluate_model_for_user(model, person_id, articles, interactions_total_ind, interactions_train_ind, interactions_test_ind)  
+            person_metrics = self.evaluate_model_for_user(model, person_id, articles, interactions_total_ind, interactions_train_ind, interactions_test_ind)  
             person_metrics['_person_id'] = person_id
-            person_recs_df['_person_id'] = person_id
             people_metrics.append(person_metrics)
-            people_recs.append(person_recs_df)
         print('%d users processed' % idx)
 
         detailed_results_df = pd.DataFrame(people_metrics).sort_values('interacted_count', ascending=False)
@@ -103,4 +100,4 @@ class ModelEvaluator:
         global_metrics = {'modelName': model.get_model_name(),
                           'recall@5': global_recall_at_5,
                           'recall@10': global_recall_at_10}    
-        return global_metrics, detailed_results_df, people_recs
+        return global_metrics, detailed_results_df
