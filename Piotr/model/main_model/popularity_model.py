@@ -13,6 +13,7 @@ class Popularity_model:
     :type arg: int
     '''
     MODEL_NAME = "popularity"
+    
     def __init__(self,user_id,articles_db,user_db=None):
         self.user = user_id
         self.articles = articles_db
@@ -104,12 +105,14 @@ class Popularity_model_department(Popularity_model):
         recommended, ev = Popularity_model.grouped_select(name='department', user_articles=user_articles, art_db=art_db, limit=limit)
         return recommended, ev
 
+
 class Popularity_model_merge(Popularity_model):
     '''przypadek z uwzględnieniem działu'''
     MODEL_NAME = "merged"
-    '''metoda recomm dla przypadku <user in database>'''
+
     @staticmethod
     def select_if_userdb(art_db, user_db, user, limit):
+        '''metoda recomm dla przypadku <user in database>'''
         P, Pe = Popularity_model.select_if_userdb(art_db, user_db, user, limit)
         A, Ae = Popularity_model_author.select_if_userdb(art_db, user_db, user, limit)
         D, De = Popularity_model_department.select_if_userdb(art_db, user_db, user, limit)

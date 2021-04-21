@@ -142,3 +142,8 @@ class Popularity_model_merge(Popularity_model):
         eee.append(ev)
         rec = choose_recomm(rrr,eee,limit,w)
         return rec
+
+
+if __name__ == "__main__":
+    a = choose_recomm([[1,2,3],[4,5,6],[7,8,9]],(1,1,10),3,w=(100,100,1))
+    print(a)

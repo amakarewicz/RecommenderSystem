@@ -51,39 +51,67 @@ def check_devide(suspects,denominator):
     return False
 
 
-a=1
-while a<4:
-    b=1
-    while b<4:
-        c=1
-        while c<4:
-            # eliminuje powtórki:
-            if not check_devide((a,b,c),(2,3,4,5,6,7,8,9,10)):
-                print((a,b,c))
-                p_model = Popularity_model_merge(art_db,readers,w=(a,b,c))
-                cf_global_metrics, cf_detailed_results_df = model_evaluator.evaluate_model(p_model, readers, readers_train, readers_test)
-                print(f'\nGlobal metrics:\n{cf_global_metrics}')
+# a=1
+# while a<4:
+#     b=1
+#     while b<4:
+#         c=1
+#         while c<4:
+#             # eliminuje powtórki:
+#             if not check_devide((a,b,c),(2,3,4,5,6,7,8,9,10)):
+#                 print((a,b,c))
+#                 p_model = Popularity_model_merge(art_db,readers,w=(a,b,c))
+#                 cf_global_metrics, cf_detailed_results_df = model_evaluator.evaluate_model(p_model, readers, readers_train, readers_test)
+#                 print(f'\nGlobal metrics:\n{cf_global_metrics}')
 
-                v = list(cf_global_metrics.values())
-                v.append((a,b,c))
-                r1 = pd.DataFrame([v],
-                        columns=['modelName',
-                        'recall@5',
-                        ' precision@5',
-                        'f1_score@5',
-                        'ndcg@5',
-                        'recall@10',
-                        'precision@10',
-                        'f1_score@10',
-                        'ndcg@10',
-                        'recall@15',
-                        'precision@15',
-                        'f1_score@15',
-                        'ndcg@15',
-                        'weight'])
-                results = results.append(r1,ignore_index=True)
-            c += 1
-        b += 1    
-    a+= 1
-results.to_csv("res.csv", encoding="utf-8", index=False)
+#                 v = list(cf_global_metrics.values())
+#                 v.append((a,b,c))
+#                 r1 = pd.DataFrame([v],
+#                         columns=['modelName',
+#                         'recall@5',
+#                         ' precision@5',
+#                         'f1_score@5',
+#                         'ndcg@5',
+#                         'recall@10',
+#                         'precision@10',
+#                         'f1_score@10',
+#                         'ndcg@10',
+#                         'recall@15',
+#                         'precision@15',
+#                         'f1_score@15',
+#                         'ndcg@15',
+#                         'weight'])
+#                 results = results.append(r1,ignore_index=True)
+#             c += 1
+#         b += 1    
+#     a+= 1
+# results.to_csv("res.csv", encoding="utf-8", index=False)
 
+# temporary
+
+for _ in range(1):
+    a,b,c = 1, 1, 1
+    print((a,b,c))
+    p_model = Popularity_model_merge(art_db,readers,w=(a,b,c))
+    cf_global_metrics, cf_detailed_results_df = model_evaluator.evaluate_model(p_model, readers, readers_train, readers_test)
+    print(f'\nGlobal metrics:\n{cf_global_metrics}')
+
+    v = list(cf_global_metrics.values())
+    v.append((a,b,c))
+    r1 = pd.DataFrame([v],
+            columns=['modelName',
+            'recall@5',
+            ' precision@5',
+            'f1_score@5',
+            'ndcg@5',
+            'recall@10',
+            'precision@10',
+            'f1_score@10',
+            'ndcg@10',
+            'recall@15',
+            'precision@15',
+            'f1_score@15',
+            'ndcg@15',
+            'weight'])
+    results = results.append(r1,ignore_index=True)
+results.to_csv("res_temporary.csv", encoding="utf-8", index=False)
