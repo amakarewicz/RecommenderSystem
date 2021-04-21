@@ -15,6 +15,7 @@ def submodel_merge(user_id,art_db,limit=10,user_db=None):
         ratio.append(ev)
     recommended = choose_recomm(all_recommendations,ratio,limit)
     return recommended
+
 if __name__ == "__main__":
     art_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\art_clean_wt_all_popularity.csv')
     user_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\readers.csv')
