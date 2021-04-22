@@ -162,5 +162,6 @@ class Popularity_model_merge(Popularity_model):
             ev = evaluation(ratio)
         rrr.append(recommended)
         eee.append(ev)
+        # eee[0]=10000
         rec = choose_recomm(rrr,eee,limit)
         return rec

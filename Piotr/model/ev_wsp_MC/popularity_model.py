@@ -140,10 +140,19 @@ class Popularity_model_merge(Popularity_model):
 
         rrr.append(recommended)
         eee.append(ev)
+        print(rrr)
+        print(eee)
         rec = choose_recomm(rrr,eee,limit,w)
+        print(rec)
         return rec
 
 
 if __name__ == "__main__":
-    a = choose_recomm([[1,2,3],[4,5,6],[7,8,9]],(1,1,10),3,w=(100,100,1))
-    print(a)
+    # a = choose_recomm([[1,2,3],[4,5,6],[7,8,9]],(1,1,10),3,w=(100,100,1))
+    # print(a)
+    art_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\art_clean_wt_all_popularity.csv')
+    user_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\readers.csv')
+    art_db = art_db.loc[:,['nzz_id','author','department','popularity']] #skrócenie do potrzebnych rzeczy
+    user_db = user_db.rename(columns={"id":"user_id", "art_id":"nzz_id"})
+    User1m = Popularity_model_merge(articles_db=art_db,user_db=user_db,w=(100,1,1))
+    User1m.recommend(1)
