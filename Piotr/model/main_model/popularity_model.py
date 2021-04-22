@@ -1,7 +1,8 @@
 from some_functions import get_db, choose_recomm, evaluation
+from abstract_model_class import Recommendation_model
 import pandas as pd
 
-class Popularity_model:
+class Popularity_model(Recommendation_model):
     '''
     Popularity object contains list of <art limit > 
     recommended articles based on user and articles database
@@ -13,15 +14,8 @@ class Popularity_model:
     :type arg: int
     '''
     MODEL_NAME = "popularity"
-    
-    def __init__(self,user_id,articles_db,user_db=None):
-        self.user = user_id
-        self.articles = articles_db
-        # self.limit=art_limit
-        self.user_db=user_db
-        self.recommended = []
 
-    def get_model_name(self):
+    def get_name(self):
         return self.MODEL_NAME
 
     def head(self,db):
@@ -60,24 +54,24 @@ class Popularity_model:
     @staticmethod
     def select_if_userdb(art_db, user_db, user, limit):
         '''metoda recomm dla przypadku <user in database>'''
-        user_articles = user_db[user_db['id'] == user].iloc[:,1].tolist()
+        user_articles = user_db[user_db['user_id'] == user].iloc[:,1].tolist()
         selected = art_db.sort_values(by='popularity',ascending=False) \
                    .head(limit + len(user_articles))[['nzz_id']].values.tolist()
 
         recommended = [item[0] for item in selected if item[0] not in user_articles][:limit]    # wyrzucam powtórki
         return recommended, 1
 
-    def recomm(self, limit):
+    def recommend(self,user_id=1, ignored=[], limit=5):
         '''wyniki systemu rekondacji (lista <limit> wyników)'''
         if self.user_db is None:
             '''przypadek bez zaimplementowanej bazy użytkowników'''
-            self.recommended, ev = self.select_if_no_userdb(self.articles, limit)
-        elif self.user not in self.user_db.id.values:
+            self.recommended, ev = self.select_if_no_userdb(self.articles_db, limit)
+        elif user_id not in self.user_db.user_id.values:
             '''przypadek zaimplementowanej bazy użytkowników, użytkownik nie jest w bazie'''
-            self.recommended, ev = self.select_if_no_userdb(self.articles, limit)
+            self.recommended, ev = self.select_if_no_userdb(self.articles_db, limit)
         else:
             '''przypadek zaimplementowanej bazy użytkownikow, użytkownik jest w bazie'''
-            self.recommended, ev = self.select_if_userdb(self.articles, self.user_db, self.user, limit)
+            self.recommended, ev = self.select_if_userdb(self.articles_db, self.user_db, user_id, limit)
 
         return self.recommended, ev
 
@@ -89,7 +83,7 @@ class Popularity_model_author(Popularity_model):
     @staticmethod
     def select_if_userdb(art_db, user_db, user, limit):
         '''metoda recomm dla przypadku <user in database>'''
-        user_articles = user_db[user_db['id'] == user].iloc[:,1].tolist()   # artykuły przeczytane
+        user_articles = user_db[user_db['user_id'] == user].iloc[:,1].tolist()   # artykuły przeczytane
         recommended, ev = Popularity_model.grouped_select(name='author', user_articles=user_articles, art_db=art_db, limit=limit)
         return recommended, ev
 
@@ -101,7 +95,7 @@ class Popularity_model_department(Popularity_model):
     @staticmethod
     def select_if_userdb(art_db, user_db, user, limit):
         '''metoda recomm dla przypadku <user in database>'''
-        user_articles = user_db[user_db['id'] == user].iloc[:,1].tolist()   # artykuły przeczytane
+        user_articles = user_db[user_db['user_id'] == user].iloc[:,1].tolist()   # artykuły przeczytane
         recommended, ev = Popularity_model.grouped_select(name='department', user_articles=user_articles, art_db=art_db, limit=limit)
         return recommended, ev
 
