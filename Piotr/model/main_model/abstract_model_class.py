@@ -26,15 +26,15 @@ class Recommendation_model(ABC):
         return self.MODEL_NAME
 
     @abstractmethod
-    def recommend(self, user_id=1, ignored=[], limit=5):
+    def recommend(self, user_id=1, ignored=False, limit=5):
         '''
         recommend method, returning list of <limit> ID's recommended by model
 
         :param user_id: user id used to find their articles in user_db
         :type arg: int
 
-        :param ignored: list containing articles read by user
-        :type arg: list
+        :param ignored: if ignored articles read by user
+        :type arg: bool
 
         :param limit: number of articles to recommend
         :type arg: int
