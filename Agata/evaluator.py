@@ -8,7 +8,7 @@ class ModelEvaluator:
 
     def get_read_articles(self,person_id, interactions):
         # Get the user's data and merge in the article info
-        interacted_items = interactions.loc[person_id, 'art_id']
+        interacted_items = interactions.loc[person_id, 'nzz_id']
         return set(interacted_items if type(interacted_items) == pd.Series else [interacted_items])
 
     def get_not_interacted_items_sample(self, person_id, articles, interactions, sample_size, seed=123):
@@ -31,10 +31,10 @@ class ModelEvaluator:
     def evaluate_model_for_user(self, model, person_id, articles, interactions, interactions_train, interactions_test):
         #Getting the items in test set
         interacted_values_testset = interactions_test.loc[person_id]
-        if type(interacted_values_testset['art_id']) == pd.Series:
-            person_interacted_items_testset = set(interacted_values_testset['art_id'])
+        if type(interacted_values_testset['nzz_id']) == pd.Series:
+            person_interacted_items_testset = set(interacted_values_testset['nzz_id'])
         else:
-            person_interacted_items_testset = set([(interacted_values_testset['art_id'])])  
+            person_interacted_items_testset = set([(interacted_values_testset['nzz_id'])])  
         interacted_items_count_testset = len(person_interacted_items_testset) 
 
         #Getting a ranked recommendation list from a model for a given user
@@ -57,8 +57,8 @@ class ModelEvaluator:
             items_to_filter_recs = non_interacted_items_sample.union(set([item_id]))
 
             #Filtering only recommendations that are either the interacted item or from a random sample of 100 non-interacted items
-            valid_recs_df = person_recs_df[person_recs_df['art_id'].isin(items_to_filter_recs)]                    
-            valid_recs = valid_recs_df['art_id'].values
+            valid_recs_df = person_recs_df[person_recs_df['nzz_id'].isin(items_to_filter_recs)]                    
+            valid_recs = valid_recs_df['nzz_id'].values
             #Verifying if the current interacted item is among the Top-N recommended items
             hit_at_5, _ = self._verify_hit_top_n(item_id, valid_recs, 5)
             hits_at_5_count += hit_at_5
@@ -79,9 +79,9 @@ class ModelEvaluator:
 
     def evaluate_model(self, model, articles, readers, interactions_train, interactions_test):
         # indexing to fasten the search
-        interactions_total_ind = readers.set_index('id')
-        interactions_train_ind = interactions_train.set_index('id')
-        interactions_test_ind = interactions_test.set_index('id')
+        interactions_total_ind = readers.set_index('user_id')
+        interactions_train_ind = interactions_train.set_index('user_id')
+        interactions_test_ind = interactions_test.set_index('user_id')
         #print('Running evaluation for users')
         people_metrics = []
         for idx, person_id in enumerate(list(interactions_test_ind.index.unique().values)):
@@ -92,8 +92,7 @@ class ModelEvaluator:
             people_metrics.append(person_metrics)
         print('%d users processed' % idx)
 
-        detailed_results_df = pd.DataFrame(people_metrics) \
-                            .sort_values('interacted_count', ascending=False)
+        detailed_results_df = pd.DataFrame(people_metrics).sort_values('interacted_count', ascending=False)
         
         global_recall_at_5 = detailed_results_df['hits@5_count'].sum() / float(detailed_results_df['interacted_count'].sum())
         global_recall_at_10 = detailed_results_df['hits@10_count'].sum() / float(detailed_results_df['interacted_count'].sum())
