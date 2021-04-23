@@ -44,6 +44,19 @@ def choose_recomm(models_recommendations,ratio,limit):
                 recommendations = [it for it in set(recommendations)]
         return recommendations
 
+def precision(rec,user_data):
+    # recommended and user articles
+    if len(user_data) != 0 and len(rec) != 0:
+        return len([i for i in rec if i in user_data]) / len(rec)
+    return np.nan
+
+
+def recall(rec,user_data):
+    # recommended and user articles
+    if len(user_data) != 0 and len(rec) != 0:
+        return len([i for i in rec if i in user_data]) / len(user_data)
+    return np.nan
+
 # tutaj z dodaną wagą
         # def choose_recomm(models_recommendations,ratio,limit,w=(1,1,1)):
         #     ''' dla wybranych rekomendacji z modeli wybieramy wg prawdopodobieństwa wyniki z każdego setu
