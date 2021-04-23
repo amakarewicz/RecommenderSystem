@@ -67,7 +67,7 @@ class Popularity_model(Recommendation_model):
         return recommended, 1
 
     @staticmethod
-    def key_select(name,art_db,user_articles, limit, ignored):
+    def _key_select(name,art_db,user_articles, limit, ignored):
         '''selecting articles basing by 'groupby' name'''
 
         selected = art_db[art_db['nzz_id'].isin(user_articles)][name]    # dep. przeczytanych art
@@ -114,7 +114,7 @@ class Popularity_model_author(Popularity_model):
     def _select_if_userdb(art_db, user_db, user_id, limit, ignored):
         '''metoda recomm dla przypadku <user in database>'''
         user_articles = Popularity_model.user_articles(user_db, user_id)
-        recommended, ev = Popularity_model.key_select(name='author', art_db=art_db,
+        recommended, ev = Popularity_model._key_select(name='author', art_db=art_db,
                                                       user_articles=user_articles,
                                                       limit=limit, ignored=ignored)
         return recommended, ev
@@ -128,7 +128,7 @@ class Popularity_model_department(Popularity_model):
     def _select_if_userdb(art_db, user_db, user_id, limit, ignored):
         '''metoda recomm dla przypadku <user in database>'''
         user_articles = Popularity_model.user_articles(user_db, user_id)
-        recommended, ev = Popularity_model.key_select(name='department', art_db=art_db,
+        recommended, ev = Popularity_model._key_select(name='department', art_db=art_db,
                                                       user_articles=user_articles,
                                                       limit=limit, ignored=ignored)
         return recommended, ev
@@ -141,8 +141,13 @@ class Popularity_model_final(Popularity_model):
     @staticmethod
     def _select_if_userdb(art_db, user_db, user_id, limit, ignored):
         '''metoda recomm dla przypadku <user in database>'''
+        user_articles = Popularity_model.user_articles(user_db, user_id)
         P, Pe = Popularity_model._select_if_userdb(art_db, user_db, user_id, limit, ignored)
-        A, Ae = Popularity_model_author._select_if_userdb(art_db, user_db, user_id, limit, ignored)
-        D, De = Popularity_model_department._select_if_userdb(art_db, user_db, user_id, limit, ignored)
+        A, Ae = Popularity_model._key_select(name='author', art_db=art_db,
+                                                      user_articles=user_articles,
+                                                      limit=limit, ignored=ignored)
+        D, De = Popularity_model._key_select(name='department', art_db=art_db,
+                                                      user_articles=user_articles,
+                                                      limit=limit, ignored=ignored)
         recommended = choose_recomm([P,A,D],(Pe,Ae,De),limit)
         return recommended, (Pe,Ae,De)
