@@ -206,7 +206,7 @@ class ModelEvaluator:
         )
 
  
-        global_metrics = {"modelName": model.get_model_name(),}
+        global_metrics = {"modelName": model.get_name(),}
         for k in self.k_list:
             global_recall_at_k = detailed_results_df[f"recall@{k}"].mean()
             global_precision_at_k = detailed_results_df[f"precision@{k}"].mean()

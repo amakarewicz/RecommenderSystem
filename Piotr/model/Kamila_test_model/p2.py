@@ -1,6 +1,6 @@
 from some_functions import get_db, choose_recomm, evaluation
-from abstract_model_class import Recommendation_model
 import pandas as pd
+from abstract_model_class import Recommendation_model
 
 class Popularity_model(Recommendation_model):
     '''
@@ -30,7 +30,7 @@ class Popularity_model(Recommendation_model):
         user_articles = user_db[user_db['user_id'] == user_id].iloc[:,1].tolist()   
         return user_articles
     
-    def recommend(self,user_id=1, limit=5,ignored=True):
+    def recommend(self, user, articles_to_ignore=[], topn=10, verbose=False):
         '''recommend method, returning list of <limit> ID's recommended by model
 
         :param user_id: user id used to find their articles in user_db
@@ -47,22 +47,23 @@ class Popularity_model(Recommendation_model):
         '''
         if self.user_db is None:
             '''user database is not given'''
-            recommended, ev = self._select_if_no_userdb(self.articles_db, limit)
-        elif user_id not in self.user_db.user_id.values:
+            recommended = self._select_if_no_userdb(self.articles_db, topn)
+        elif user not in self.user_db.user_id.values:
             '''user not in user database'''
-            recommended, ev = self._select_if_no_userdb(self.articles_db, limit)
+            recommended = self._select_if_no_userdb(self.articles_db, topn)
         else:
             '''user in user database'''
-            recommended, ev = self._select_if_userdb(self.articles_db,
-                                                          self.user_db, user_id,
-                                                          limit, ignored)
-        return recommended, ev
+            recommended = self._select_if_userdb(self.articles_db,
+                                                          self.user_db, user,
+                                                          topn, articles_to_ignore)
+        db = pd.DataFrame(recommended,columns=['nzz_id'])
+        return db
 
     @staticmethod
     def _select_if_no_userdb(art_db,limit):
         '''recommend method for case <user not in DB> and <DB is None>'''
         recommended = list(art_db.sort_values(by='popularity',ascending=False).head(limit)['nzz_id'])
-        return recommended, 1
+        return recommended
 
     @staticmethod
     def _select_if_userdb(art_db, user_db, user_id, limit, ignored):
@@ -70,7 +71,7 @@ class Popularity_model(Recommendation_model):
         if ignored in [False, []]:
             # without ignoring any article
             recommended = list(art_db.sort_values(by='popularity',ascending=False).head(limit)['nzz_id'])
-            return recommended, 1
+            return recommended
         elif ignored is True:
             # ignoring articles read by user
             ignored = Popularity_model.user_articles(user_db, user_id)  # artykuły przeczytane
@@ -80,7 +81,7 @@ class Popularity_model(Recommendation_model):
         # excluding ignored
         recommended = [item for item in selected if item not in ignored][:limit]    # wyrzucam powtórki
         
-        return recommended, 1
+        return recommended
 
     @staticmethod
     def _key_select(name,art_db,user_articles, limit, ignored):
@@ -136,10 +137,10 @@ class Popularity_model_author(Popularity_model):
     def _select_if_userdb(art_db, user_db, user_id, limit, ignored):
         '''recommend method for case <user in database>'''
         user_articles = Popularity_model.user_articles(user_db, user_id)
-        recommended, ev = Popularity_model._key_select(name='author', art_db=art_db,
+        recommended, _ = Popularity_model._key_select(name='author', art_db=art_db,
                                                       user_articles=user_articles,
                                                       limit=limit, ignored=ignored)
-        return recommended, ev
+        return recommended
 
 
 class Popularity_model_department(Popularity_model):
@@ -150,10 +151,10 @@ class Popularity_model_department(Popularity_model):
     def _select_if_userdb(art_db, user_db, user_id, limit, ignored):
         '''recommend method for case <user in database>'''
         user_articles = Popularity_model.user_articles(user_db, user_id)
-        recommended, ev = Popularity_model._key_select(name='department', art_db=art_db,
+        recommended, _ = Popularity_model._key_select(name='department', art_db=art_db,
                                                       user_articles=user_articles,
                                                       limit=limit, ignored=ignored)
-        return recommended, ev
+        return recommended
 
 
 class Popularity_model_final(Popularity_model):
@@ -168,7 +169,7 @@ class Popularity_model_final(Popularity_model):
     def _select_if_userdb(art_db, user_db, user_id, limit, ignored):
         '''recommend method for case <user in database>'''
         user_articles = Popularity_model.user_articles(user_db, user_id)
-        P, Pe = Popularity_model._select_if_userdb(art_db, user_db, user_id, limit, ignored)
+        P  = Popularity_model._select_if_userdb(art_db, user_db, user_id, limit, ignored)
         A, Ae = Popularity_model._key_select(name='author', art_db=art_db,
                                                       user_articles=user_articles,
                                                       limit=limit, ignored=ignored)
@@ -176,5 +177,5 @@ class Popularity_model_final(Popularity_model):
                                                       user_articles=user_articles,
                                                       limit=limit, ignored=ignored)
         # choosing by probability from ratio p.e. P((1, 2, 3)) = (1/6, 2/6, 3/6)
-        recommended = choose_recomm([P,A,D],(Pe,Ae,De),limit)
-        return recommended, (Pe,Ae,De)
+        recommended = choose_recomm([P,A,D],(1,Ae,De),limit)
+        return recommended

@@ -9,7 +9,7 @@ class Popularity_model:
         self.user_db=user_db
         self.recommended = []
     
-    def get_model_name(self):
+    def get_name(self):
         return self.MODEL_NAME
 
     def head(self,db):
