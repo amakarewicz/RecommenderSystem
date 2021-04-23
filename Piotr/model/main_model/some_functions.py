@@ -18,11 +18,30 @@ def evaluation(ratio):
     se = sqrt(sum( [(it - 1)**2 for it in ratio]))
     return round(se,2)
 
-def choose_recomm(models_recommendations,ratio,limit):
+
+def precision(rec,user_data):
+    # recommended and user articles
+    if len(user_data) != 0 and len(rec) != 0:
+        return len([i for i in rec if i in user_data]) / len(rec)
+    return np.nan
+
+
+def recall(rec,user_data):
+    # recommended and user articles
+    if len(user_data) != 0 and len(rec) != 0:
+        return len([i for i in rec if i in user_data]) / len(user_data)
+    return np.nan
+
+
+def choose_recomm(models_recommendations,ratio,limit,w=(1,1,1)):
     ''' dla wybranych rekomendacji z modeli wybieramy wg prawdopodobieństwa wyniki z każdego setu
     :par models_recommendations: lista z listami rekomendacji [[r11,r12,r13],[r21,r22,r23],...]
     :par ratio: stosunek wagi poszczegolnych modeli
     '''
+    # nadanie wagi
+    if len(ratio) == 3:
+        ratio = np.array(ratio)*np.array(w)
+        
     if len(models_recommendations) != len(ratio):
         raise ValueError
     vect = prob_vector_from_ratio(ratio)
@@ -42,39 +61,35 @@ def choose_recomm(models_recommendations,ratio,limit):
             if len(recommendations) != len(set(recommendations)):
                 # wyrzucenie powtórek
                 recommendations = [it for it in set(recommendations)]
+            # print(models_recommendations)
         return recommendations
 
-# tutaj z dodaną wagą
-        # def choose_recomm(models_recommendations,ratio,limit,w=(1,1,1)):
-        #     ''' dla wybranych rekomendacji z modeli wybieramy wg prawdopodobieństwa wyniki z każdego setu
-        #     :par models_recommendations: lista z listami rekomendacji [[r11,r12,r13],[r21,r22,r23],...]
-        #     :par ratio: stosunek wagi poszczegolnych modeli
-        #     '''
-        #     # nadanie wagi
-        #     if len(ratio) == 3:
-        #         ratio = np.array(ratio)*np.array(w)
-        #     if len(models_recommendations) != len(ratio):
-        #         raise ValueError
-        #     vect = prob_vector_from_ratio(ratio)
-        #     recommendations=[]
-        #     if sum([len(it) for it in models_recommendations]) <= limit:
-        #         # przypadek w którym nie ma wystarczającej liczby artykułów
-        #         for it in models_recommendations:
-        #             recommendations.extend([i for i in it])
-        #         return recommendations 
-        #     else:
-        #         while len(recommendations) < limit:
-        #             p = np.random.rand()
-        #             x = p > vect
-        #             ind = list(x).index(False)
-        #             if len(models_recommendations[ind]) > 0:
-        #                 recommendations.append(models_recommendations[ind].pop(0))
-        #             if len(recommendations) != len(set(recommendations)):
-        #                 # wyrzucenie powtórek
-        #                 recommendations = [it for it in set(recommendations)]
-        #             # print(models_recommendations)
-        #         return recommendations
 
+# def choose_recomm(models_recommendations,ratio,limit):
+#     ''' dla wybranych rekomendacji z modeli wybieramy wg prawdopodobieństwa wyniki z każdego setu
+#     :par models_recommendations: lista z listami rekomendacji [[r11,r12,r13],[r21,r22,r23],...]
+#     :par ratio: stosunek wagi poszczegolnych modeli
+#     '''
+#     if len(models_recommendations) != len(ratio):
+#         raise ValueError
+#     vect = prob_vector_from_ratio(ratio)
+#     recommendations=[]
+#     if sum([len(it) for it in models_recommendations]) <= limit:
+#         # przypadek w którym nie ma wystarczającej liczby artykułów
+#         for it in models_recommendations:
+#             recommendations.extend([i for i in it])
+#         return recommendations 
+#     else:
+#         while len(recommendations) < limit:
+#             p = np.random.rand()
+#             x = p > vect
+#             ind = list(x).index(False)
+#             if len(models_recommendations[ind]) > 0:
+#                 recommendations.append(models_recommendations[ind].pop(0))
+#             if len(recommendations) != len(set(recommendations)):
+#                 # wyrzucenie powtórek
+#                 recommendations = [it for it in set(recommendations)]
+#         return recommendations
 
 
 if __name__ == "__main__":
