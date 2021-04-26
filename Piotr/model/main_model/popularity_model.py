@@ -31,7 +31,7 @@ class Popularity_model(Recommendation_model):
         user_articles = user_db[user_db['user_id'] == user_id].iloc[:,1].tolist()   
         return user_articles
     
-    def recommend(self,user_id: int, limit: int = 5,ignored: bool = True) -> [list, int]:
+    def recommend(self,user_id: int, limit: int = 5,ignored: bool = True, ev_return: bool = False) -> list:
         '''recommend method, returning list of <limit> ID's recommended by model
 
         :param user_id: user id used to find their articles in user_db
@@ -45,6 +45,9 @@ class Popularity_model(Recommendation_model):
                         list -> list of ignored articles
                         empty list / False -> not ignored
         :type arg: bool / list
+
+        :param ev_return: if True, second return is eval value, default: False
+        :type arg: bool
         '''
         if self.user_db is None:
             '''user database is not given'''
@@ -57,7 +60,9 @@ class Popularity_model(Recommendation_model):
             recommended, ev = self._select_if_userdb(self.articles_db,
                                                           self.user_db, user_id,
                                                           limit, ignored)
-        return recommended, ev
+        if ev_return == True:
+            return recommended, ev
+        return recommended    
 
     @staticmethod
     def _select_if_no_userdb(art_db: pd.DataFrame, limit: int) -> [list, int]:

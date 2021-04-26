@@ -1,0 +1,7 @@
+1. rozbicie artykułów na pierwszą połowę i drugą połowę
+	wg daty
+2. wyznaczenie użytkowników, którzy mają przeczytane conajmniej 3 artkuły z każdej bazy
+
+3. dla każdego wyznaczonego użytkownika:
+	ar = artykuły przeczytane z pierwszej połowy
+	rekomendacja artykułów z drugiej połowy na podstawie <ar>
