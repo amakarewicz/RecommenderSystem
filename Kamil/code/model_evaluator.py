@@ -146,7 +146,8 @@ class ModelEvaluator:
                     person_recs_df["nzz_id"].isin(items_to_filter_recs)
                 ]
                 valid_recs = valid_recs_df["nzz_id"].values
-                all_person_recs.append(valid_recs_df["nzz_id"][:k].values.tolist())
+                
+                all_person_recs.append(person_recs_df["nzz_id"][:k].values.tolist())
                 # Verifying if the current interacted item is among the Top-N recommended items
                 hit_at_k, index_at_k = self._verify_hit_top_n(item_id, valid_recs, k)
                 relevance_array_at_k = np.zeros(k)
