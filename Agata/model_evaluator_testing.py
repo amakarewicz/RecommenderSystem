@@ -143,7 +143,7 @@ class ModelEvaluator:
             person_metrics[f"f1_score@{k}"] = f1_score_at_k
             person_metrics[f"ndcg@{k}"] = ndcg_at_k_score
 
-        return person_metrics
+        return person_metrics, person_recs_df
 
     def evaluate_model(self, model, readers, readers_train, readers_test):
         # Indexing by personId to speed up the searches during evaluation
@@ -154,17 +154,19 @@ class ModelEvaluator:
 
         # print('Running evaluation for users')
         people_metrics = []
-
+        person_recs_all = []
         for idx, person_id in enumerate(
             list(self.interactions_test_indexed_df.index.unique().values)
         ):
             # if idx % 100 == 0 and idx > 0:
             #    print('%d users processed' % idx)
-            person_metrics = self._evaluate_model_for_user(model, person_id)
+            person_metrics, person_recs = self._evaluate_model_for_user(model, person_id)
             #all_recs_at_5.append(person_recs_df["nzz_id"].head(5).values)
             #all_recs_at_10.append(person_recs_df["nzz_id"].head(10).values)
             person_metrics["_person_id"] = person_id
+            person_recs["_person_id"] = person_id
             people_metrics.append(person_metrics)
+            person_recs_all.append(person_recs)
         print("%d users processed" % idx)
 
         detailed_results_df = pd.DataFrame(people_metrics).sort_values(
@@ -187,4 +189,4 @@ class ModelEvaluator:
         #coverage_at_5 = self._get_coverage(all_recs_at_5, self.interactions_train_indexed_df["nzz_id"].unique())
         #coverage_at_10 = self._get_coverage(all_recs_at_10, self.interactions_train_indexed_df["nzz_id"].unique())
 
-        return global_metrics, detailed_results_df
+        return global_metrics, detailed_results_df, person_recs_all
