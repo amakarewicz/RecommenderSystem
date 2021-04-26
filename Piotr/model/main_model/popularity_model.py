@@ -1,6 +1,7 @@
 from some_functions import get_db, choose_recomm, evaluation
 from abstract_model_class import Recommendation_model
 import pandas as pd
+from typing import Union
 
 class Popularity_model(Recommendation_model):
     '''
@@ -20,17 +21,17 @@ class Popularity_model(Recommendation_model):
 
     MODEL_NAME = "popularity"
 
-    def head(self,db):
+    def head(self,db: pd.DataFrame) -> pd.DataFrame:
         '''returns head of chosen database'''
         return db.head()
 
     @staticmethod
-    def user_articles(user_db, user_id):
+    def user_articles(user_db: pd.DataFrame, user_id: int) -> list:
         '''method returning articles read by given user'''
         user_articles = user_db[user_db['user_id'] == user_id].iloc[:,1].tolist()   
         return user_articles
     
-    def recommend(self,user_id=1, limit=5,ignored=True):
+    def recommend(self,user_id: int, limit: int = 5,ignored: bool = True) -> [list, int]:
         '''recommend method, returning list of <limit> ID's recommended by model
 
         :param user_id: user id used to find their articles in user_db
@@ -59,13 +60,14 @@ class Popularity_model(Recommendation_model):
         return recommended, ev
 
     @staticmethod
-    def _select_if_no_userdb(art_db,limit):
+    def _select_if_no_userdb(art_db: pd.DataFrame, limit: int) -> [list, int]:
         '''recommend method for case <user not in DB> and <DB is None>'''
         recommended = list(art_db.sort_values(by='popularity',ascending=False).head(limit)['nzz_id'])
         return recommended, 1
 
     @staticmethod
-    def _select_if_userdb(art_db, user_db, user_id, limit, ignored):
+    def _select_if_userdb(art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
+                          limit: int, ignored: Union[list,bool]) -> [list, int]:
         '''recommend method for case <user in database>'''
         if ignored in [False, []]:
             # without ignoring any article
@@ -83,7 +85,8 @@ class Popularity_model(Recommendation_model):
         return recommended, 1
 
     @staticmethod
-    def _key_select(name,art_db,user_articles, limit, ignored):
+    def _key_select(name: str, art_db: pd.DataFrame, user_articles: list,
+                    limit: int, ignored: Union[list,bool]):
         '''selecting articles based on <name> ('department' or 'author')'''
         # selecting articles
         selected = art_db[art_db['nzz_id'].isin(user_articles)][name]
@@ -133,7 +136,8 @@ class Popularity_model_author(Popularity_model):
     MODEL_NAME = "author"
 
     @staticmethod
-    def _select_if_userdb(art_db, user_db, user_id, limit, ignored):
+    def _select_if_userdb(art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
+                          limit: int, ignored: Union[list,bool]) -> [list, int]:
         '''recommend method for case <user in database>'''
         user_articles = Popularity_model.user_articles(user_db, user_id)
         recommended, ev = Popularity_model._key_select(name='author', art_db=art_db,
@@ -147,7 +151,8 @@ class Popularity_model_department(Popularity_model):
     MODEL_NAME = "department"
     
     @staticmethod
-    def _select_if_userdb(art_db, user_db, user_id, limit, ignored):
+    def _select_if_userdb(art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
+                          limit: int, ignored: Union[list,bool]) -> [list, int]:
         '''recommend method for case <user in database>'''
         user_articles = Popularity_model.user_articles(user_db, user_id)
         recommended, ev = Popularity_model._key_select(name='department', art_db=art_db,
@@ -165,7 +170,8 @@ class Popularity_model_final(Popularity_model):
     MODEL_NAME = "final"
 
     @staticmethod
-    def _select_if_userdb(art_db, user_db, user_id, limit, ignored):
+    def _select_if_userdb(art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
+                          limit: int, ignored: Union[list,bool]) -> [list, tuple]:
         '''recommend method for case <user in database>'''
         user_articles = Popularity_model.user_articles(user_db, user_id)
         P, Pe = Popularity_model._select_if_userdb(art_db, user_db, user_id, limit, ignored)
