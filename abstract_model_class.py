@@ -23,14 +23,14 @@ class Recommendation_model(ABC):
         self.articles_db = articles_db
         self.user_db = user_db
 
-    def get_name(self):
+    def get_name(self) -> str:
         """ method get_name()
         method returning self.MODEL_NAME
         """
         return self.MODEL_NAME
 
     @abstractmethod
-    def recommend(self, user_id: int, limit: int = 5, ignored: Union[list,bool] = True):
+    def recommend(self, user_id: int, limit: int = 5, ignored: Union[list,bool] = True) -> list:
         """recommend method, returning list of <limit> ID's recommended by model
 
         :param user_id: user id used to find their articles in user_db
@@ -44,5 +44,8 @@ class Recommendation_model(ABC):
                         list -> list of ignored articles
                         empty list / False -> not ignored
         :type arg: bool / list
+
+        :return: list of articles
+        :param return: list
         """
         pass
