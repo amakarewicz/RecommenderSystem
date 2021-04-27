@@ -31,7 +31,7 @@ class Popularity_model(Recommendation_model):
         user_articles = user_db[user_db['user_id'] == user_id].iloc[:,1].tolist()   
         return user_articles
     
-    def recommend(self,user_id: int, limit: int = 5,ignored: bool = True, ev_return: bool = False) -> list:
+    def recommend(self,user_id: int, limit: int = 5,ignored: Union[list,bool] = True, ev_return: bool = False) -> list:
         '''recommend method, returning list of <limit> ID's recommended by model
 
         :param user_id: user id used to find their articles in user_db
