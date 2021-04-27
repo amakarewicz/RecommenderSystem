@@ -9,11 +9,13 @@ class ModelEvaluator:
     # Top-N accuracy metrics consts
     EVAL_RANDOM_SAMPLE_NON_INTERACTED_ITEMS = 100
     
-    def __init__(self, k_list, filter_similar=False, vec_matrix=None, vec_names=None, articles=None):
+    def __init__(self, k_list, filter_similar=False, vec_matrix=None, vec_names=None, articles=None, model=None):
         self.k_list = k_list
         self.filter_similar = filter_similar
         self.vec_matrix = vec_matrix
+        self.vec_names = vec_names
         self.articles = articles
+        self.model = model
 
     def dcg_at_k(self, r, k, method=0):
         r= np.asfarray(r)[:k]
@@ -87,7 +89,25 @@ class ModelEvaluator:
             similar_pairs = np.where(matrix_lower>=0.5)
             similar_df = pd.DataFrame(np.column_stack(similar_pairs),columns=['first_art','second_art'])
 
-            new_indices = [x for i, x in enumerate(indices) if i not in list(similar_df['first_art'])]
+            for i in range(len(similar_df)):
+                id_1 = similar_df.loc[i,'first_art']
+                sorted_1 = np.argsort(self.vec_matrix[id_1].data)[:-(5+1):-1]
+                key_1 = np.array(self.vec_names)[self.vec_matrix[id_1].indices[sorted_1]]
+                id_2 = similar_df.loc[i,'second_art']
+                sorted_2 = np.argsort(self.vec_matrix[id_2].data)[:-(5+1):-1]
+                key_2 = np.array(self.vec_names)[self.vec_matrix[id_2].indices[sorted_2]]
+                
+                key_vec_1 = [self.model.get_word_vector(x) for x in key_1]
+                key_vec_2 = [self.model.get_word_vector(x) for x in key_2]
+
+                if not key_vec_1: key_vec_1 = [self.model.get_word_vector('') for i in range(5)]
+                if not key_vec_2: key_vec_2 = [self.model.get_word_vector('') for i in range(5)]
+                
+                cos_matrix = [[cosine_similarity(x.reshape(1,-1),y.reshape(1,-1)) for x in key_vec_1] for y in key_vec_2]
+                similarity = np.mean(cos_matrix)
+                similar_df['similarity'] = similarity
+
+            new_indices = [x for i, x in enumerate(indices) if i not in list(similar_df.loc[similar_df.similarity >= 0.5, 'first_art'])]
             filtered_recs_ind = self.articles.loc[new_indices, 'nzz_id']
 
             new_recs = person_recs_df.loc[person_recs_df.nzz_id.isin(list(filtered_recs_ind))]
