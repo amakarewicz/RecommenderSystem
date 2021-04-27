@@ -112,7 +112,7 @@ if __name__ == "__main__":
     user_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\readers.csv')
 
     x = period_eval()
-    r = x.evaluate_model( popularity_model.Popularity_model,
+    r = x.evaluate_model( popularity_model.Popularity_model_final,
                           art_db, user_db, limit = [5, 10, 15] )
     print(r)
-    print(r.groupby('number_of_recomm')[['precision','recall']].mean())
+    print(r.groupby('number_of_recomm')[['precision','recall']].describe())
