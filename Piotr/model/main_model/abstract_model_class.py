@@ -1,14 +1,16 @@
 from abc import ABC, abstractmethod
+import pandas as pd
+from typing import Union
 
 
 class Recommendation_model(ABC):
-    '''
+    """
     Abstract class for recommendation_models
-    '''
+    """
     MODEL_NAME = "Recommendation_model"
 
-    def __init__(self, articles_db=None, user_db=None):
-        '''
+    def __init__(self, articles_db: pd.DataFrame = None, user_db: pd.DataFrame = None):
+        """
         :param articles_db: database of articles, containing for each:
             [nzz_id, author, catchline, content, content_length,
              department, lead_text, pub_date, title, popularity]
@@ -17,19 +19,19 @@ class Recommendation_model(ABC):
         :param user_db: database of users and their read articles, containg:
             [user_id, nzz_id]
         :type arg: pandas table
-        '''
+        """
         self.articles_db = articles_db
         self.user_db = user_db
 
     def get_name(self):
-        '''method get_name()
+        """ method get_name()
         method returning self.MODEL_NAME
-        '''
+        """
         return self.MODEL_NAME
 
     @abstractmethod
-    def recommend(self, user_id=1, limit=5, ignored=True):
-        '''recommend method, returning list of <limit> ID's recommended by model
+    def recommend(self, user_id: int, limit: int = 5, ignored: Union[list,bool] = True):
+        """recommend method, returning list of <limit> ID's recommended by model
 
         :param user_id: user id used to find their articles in user_db
         :type arg: int
@@ -42,7 +44,5 @@ class Recommendation_model(ABC):
                         list -> list of ignored articles
                         empty list / False -> not ignored
         :type arg: bool / list
-        '''
+        """
         pass
-
-    
