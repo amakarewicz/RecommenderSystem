@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import pandas as pd
 from typing import Union
-
+import numpy as np
 
 class Recommendation_model(ABC):
     """
@@ -9,7 +9,8 @@ class Recommendation_model(ABC):
     """
     MODEL_NAME = "Recommendation_model"
 
-    def __init__(self, articles_db: pd.DataFrame = None, user_db: pd.DataFrame = None):
+    def __init__(self, articles_db: pd.DataFrame = None, user_db: pd.DataFrame = None, 
+                    matrix: pd.DataFrame = None, feature_names: np.array = None):
         """
         :param articles_db: database of articles, containing for each:
             [nzz_id, author, catchline, content, content_length,
@@ -22,9 +23,13 @@ class Recommendation_model(ABC):
         """
         self.articles_db = articles_db
         self.user_db = user_db
+        self.matrix = matrix
+        self.feature_names = feature_names
 
     def get_name(self) -> str:
-        """ method returning self.MODEL_NAME """
+        """ method get_name()
+        method returning self.MODEL_NAME
+        """
         return self.MODEL_NAME
 
     @staticmethod
@@ -32,7 +37,7 @@ class Recommendation_model(ABC):
         '''method returning articles read by given user'''
         user_articles = user_db[user_db['user_id'] == user_id].iloc[:,1].tolist()   
         return user_articles
-        
+
     @abstractmethod
     def recommend(self, user_id: int, limit: int = 5, ignored: Union[list,bool] = True) -> list:
         """recommend method, returning list of <limit> ID's recommended by model
@@ -50,6 +55,6 @@ class Recommendation_model(ABC):
         :type arg: bool / list
 
         :return: list of articles
-        :type return: list
+        :param return: list
         """
         pass

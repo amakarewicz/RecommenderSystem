@@ -92,7 +92,7 @@ def check_devide(suspects,denominator):
 for _ in range(1):
     a,b,c = 1, 1, 1
     print((a,b,c))
-    p_model = Popularity_model_merge(art_db,readers,w=(a,b,c))
+    p_model = Popularity_model_final(art_db,readers,w=(a,b,c))
     cf_global_metrics, cf_detailed_results_df = model_evaluator.evaluate_model(p_model, readers, readers_train, readers_test)
     print(f'\nGlobal metrics:\n{cf_global_metrics}')
 

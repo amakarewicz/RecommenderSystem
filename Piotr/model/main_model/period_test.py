@@ -61,9 +61,14 @@ class period_eval:
         return
 
     def evaluate_model(self, Model: Recommendation_model, art_db: pd.DataFrame,
-                       user_db: pd.DataFrame ,limit: list = [5, 10, 15]) -> pd.DataFrame:
+                       user_db: pd.DataFrame ,limit: list = [5, 10, 15],
+                    model_parameters: list = [], **kwargs) -> pd.DataFrame:
         """ function evaluating model, returning dataframe of results for each user and
             each number of articles (limit)
+            **kwargs - further parameters for model __init__,
+                p.e. evaluate_model( Model=Popularity_model_final, ... , w=(100,1,1) )
+    
+
         """
         # creating subperiods
         self.readers_in_half(art_db,user_db)
@@ -75,15 +80,14 @@ class period_eval:
         for i in range(1,1001):
             for l in limit:
                 # getting articles read by user in first period
-                user_articles_1 = self.user_articles(self.readers_1st_period, user_id = i)
+                user_articles_1 = self.user_articles(self.readers_1st_period, user_id = i)  
                 # broaden articles from second period by thos read by user from 1st period
                 articles = self.articles_2nd_period.append(
                         self.articles_1st_period[
                         self.articles_1st_period['nzz_id'].isin(user_articles_1)])
 
                 # gettin recommendations
-                model = Model(articles_db=articles,
-                            user_db=self.readers_1st_period)
+                model = Model(articles_db=articles, user_db=self.readers_1st_period,**kwargs)
                 recommended = model.recommend(user_id=i, limit=l,ignored=True)
 
                 # getting articles read by user in second period
