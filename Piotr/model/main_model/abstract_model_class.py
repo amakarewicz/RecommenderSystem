@@ -24,11 +24,15 @@ class Recommendation_model(ABC):
         self.user_db = user_db
 
     def get_name(self) -> str:
-        """ method get_name()
-        method returning self.MODEL_NAME
-        """
+        """ method returning self.MODEL_NAME """
         return self.MODEL_NAME
 
+    @staticmethod
+    def user_articles(user_db: pd.DataFrame, user_id: int) -> list:
+        '''method returning articles read by given user'''
+        user_articles = user_db[user_db['user_id'] == user_id].iloc[:,1].tolist()   
+        return user_articles
+        
     @abstractmethod
     def recommend(self, user_id: int, limit: int = 5, ignored: Union[list,bool] = True) -> list:
         """recommend method, returning list of <limit> ID's recommended by model
@@ -46,6 +50,6 @@ class Recommendation_model(ABC):
         :type arg: bool / list
 
         :return: list of articles
-        :param return: list
+        :type return: list
         """
         pass
