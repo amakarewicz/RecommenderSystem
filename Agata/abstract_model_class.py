@@ -73,7 +73,7 @@ class Recommendation_model(ABC):
                 # computing similarity
                 cos_matrix = [[cosine_similarity(x.reshape(1,-1),y.reshape(1,-1)) for x in key_vec_1] for y in key_vec_2]
                 similarity = np.mean(cos_matrix)
-                similar_df['similarity'] = similarity
+                similar_df.loc[i, 'similarity'] = similarity
 
             # filtering the recommendations
             new_indices = [x for i, x in enumerate(indices) if i not in list(similar_df.loc[similar_df.similarity >= keyword_similarity, 'first_art'])]
