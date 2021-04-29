@@ -32,6 +32,11 @@ def recall(rec,user_data):
         return len([i for i in rec if i in user_data]) / len(user_data)
     return np.nan
 
+def f1score(recall: float, precision: float):
+    """ harmonic mean of precision and recall """
+    if recall == 0 or precision == 0:
+        return 0
+    return 1/(1/recall + 1/precision)
 
 def choose_recomm(models_recommendations,ratio,limit,w=(1,1,1)):
     ''' dla wybranych rekomendacji z modeli wybieramy wg prawdopodobieństwa wyniki z każdego setu

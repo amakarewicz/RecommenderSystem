@@ -179,7 +179,7 @@ class Popularity_model_final(Popularity_model):
 
     def __init__(self, articles_db: pd.DataFrame, user_db: pd.DataFrame, w: tuple = (1,1,1)):
         """
-        :param w: weight for each of submodels -> popularity, author, department
+        :param w: weight for each of submodels -> (popularity, author, department)
         :type arg: tuple
         """
         super().__init__(articles_db,user_db)
