@@ -4,62 +4,66 @@ import pandas as pd
 from typing import Union
 
 class Popularity_model(Recommendation_model):
-    """
-    method __init__(self, articles_db, user_db)
-        :param articles_db: database of articles, containing for each:
-            [nzz_id, author, catchline, content, content_length,
-                department, lead_text, pub_date, title, popularity]
-        :type arg: pandas table
+    """ Popularity Recommendation Model Class
 
-        :param user_db: database of users and their read articles, containg:
-            [user_id, nzz_id]
-        :type arg: pandas table
+    defined in Recommendation_model abstract class:
 
-    method: get_name(self)
-        method returning self.MODEL_NAME
+    >> method:  __init__(self, articles_db, user_db)
 
-    static method: user_articles(user_db: pd.DataFrame, user_id: int) -> list:
-        method returning articles read by given user
+    Args:
+        articles_db (pd.DataFrame, optional): database of articles, containing for each:
+                        [nzz_id, author, catchline, content, content_length,
+                        department, lead_text, pub_date, title, popularity].
+                        Defaults to None.
+        user_db (pd.DataFrame, optional): database of users and their read articles, containg:
+                        [user_id, nzz_id].
+                        Defaults to None.
+
+    >> method: get_name(self)
+    method returning self.MODEL_NAME
+
+    Returns:
+        str: model name
+
+    >> static method: user_articles(user_db: pd.DataFrame, user_id: int) -> list:
+    method returning articles read by given user
+
+    Args:
+        user_db (pd.DataFrame): list of all users interactions
+        user_id (int):  user id
+
+    Returns:
+        list: list of articles read by user.
     """
 
     MODEL_NAME = "popularity"
-
-    def head(self,db: pd.DataFrame) -> pd.DataFrame:
-        """ returns head of chosen database """
-        return db.head()
-
-    @staticmethod
-    def user_articles(user_db: pd.DataFrame, user_id: int) -> list:
-        """method returning articles read by given user"""
-        user_articles = user_db[user_db['user_id'] == user_id].iloc[:,1].tolist()   
-        return user_articles
     
-    def recommend(self,user_id: int, limit: int = 5,ignored: Union[list,bool] = True, ev_return: bool = False) -> list:
+    def recommend(self,user_id: int, limit: int = 5,ignored: Union[list, bool] = True, ev_return: bool = False) -> list:
         """ recommend method, returning list of <limit> ID's recommended by model
 
-        :param user_id: user id used to find their articles in user_db
-        :type arg: int
+        Args:
+            user_id (int): user id used to find their articles in user_db
+            limit (int, optional): number of articles to recommend. Defaults to 5.
+            ignored (Union[list, bool], optional): if ignored
+                                                   True (default) -> articles read by user
+                                                   list -> list of ignored articles
+                                                   empty list / False -> nothing ignored
+                                                   Defaults to True.
+            ev_return (bool, optional): if True, second return is eval value. Defaults to True.
 
-        :param limit: number of articles to recommend
-        :type arg: int
-
-        :param ignored: if ignored
-                        True (default) -> articles read by user
-                        list -> list of ignored articles
-                        empty list / False -> not ignored
-        :type arg: bool / list
-
-        :param ev_return: if True, second return is eval value, default: False
-        :type arg: bool
+        Returns:
+          list: list of recommended articles.
+          int, optional: evaluation of results.
         """
+        
         if self.user_db is None:
-            """ user database is not given """
+            # user database is not given
             recommended, ev = self._select_if_no_userdb(self.articles_db, limit)
         elif user_id not in self.user_db.user_id.values:
-            """ user not in user database """
+            # user not in user database
             recommended, ev = self._select_if_no_userdb(self.articles_db, limit)
         else:
-            """ user in user database """
+            # user in user database
             recommended, ev = self._select_if_userdb(self.articles_db,
                                                           self.user_db, user_id,
                                                           limit, ignored)
@@ -69,14 +73,39 @@ class Popularity_model(Recommendation_model):
 
     @staticmethod
     def _select_if_no_userdb(art_db: pd.DataFrame, limit: int) -> [list, int]:
-        """ recommend method for case <user not in DB> and <DB is None> """
+        """ recommend method for case <user not in DB> and <DB is None> 
+
+        Args:
+            art_db (pd.DataFrame): database of articles
+            limit (int): database of users and their read articles
+
+        Returns:
+            list: list of recommended articles.
+            int: evaluation of results.
+        """
         recommended = list(art_db.sort_values(by='popularity',ascending=False).head(limit)['nzz_id'])
         return recommended, 1
 
     @staticmethod
     def _select_if_userdb(art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
                           limit: int, ignored: Union[list,bool]) -> [list, int]:
-        """ recommend method for case <user in database> """
+        """ recommend method for case <user in database>
+
+        Args:
+            art_db (pd.DataFrame): database of articles
+            user_db (pd.DataFrame): database of users and their read articles
+            user_id (int): user id used to find their articles in user_db
+            limit (int): number of articles to recommend.
+            ignored (Union[list,bool]): if ignored:
+                                        True (default) -> articles read by user
+                                        list -> list of ignored articles
+                                        empty list / False -> nothing ignored
+                                                  
+
+        Returns:
+            list: list of recommended articles.
+            int: evaluation of results.
+        """
         if ignored in [False, []]:
             # without ignoring any article
             recommended = list(art_db.sort_values(by='popularity',ascending=False).head(limit)['nzz_id'])
@@ -94,8 +123,23 @@ class Popularity_model(Recommendation_model):
 
     @staticmethod
     def _key_select(name: str, art_db: pd.DataFrame, user_articles: list,
-                    limit: int, ignored: Union[list,bool]):
-        """ selecting articles based on <name> ('department' or 'author') """
+                    limit: int, ignored: Union[list,bool]) -> [list, int]:
+        """ selecting articles based on <name> ('department' or 'author')
+
+        Args:
+            name (str): pd.groupby column
+            art_db (pd.DataFrame): database of articles
+            user_articles (list): list of articles read by user.
+            limit (int): number of articles to recommend.
+            ignored (Union[list,bool]): if ignored:
+                                        True (default) -> articles read by user
+                                        list -> list of ignored articles
+                                        empty list / False -> nothing ignored
+
+        Returns:
+            list: list of recommended articles.
+            int: evaluation of results.
+        """
         # selecting articles
         selected = art_db[art_db['nzz_id'].isin(user_articles)][name]
         # selecting those which <name> occures at least 2 times
@@ -146,7 +190,23 @@ class Popularity_model_author(Popularity_model):
     @staticmethod
     def _select_if_userdb(art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
                           limit: int, ignored: Union[list,bool]) -> [list, int]:
-        """ recommend method for case <user in database> """
+        """ recommend method for case <user in database>
+
+        Args:
+            art_db (pd.DataFrame): database of articles
+            user_db (pd.DataFrame): database of users and their read articles
+            user_id (int): user id used to find their articles in user_db
+            limit (int): number of articles to recommend.
+            ignored (Union[list,bool]): if ignored:
+                                        True (default) -> articles read by user
+                                        list -> list of ignored articles
+                                        empty list / False -> nothing ignored
+                                                  
+
+        Returns:
+            list: list of recommended articles.
+            int: evaluation of results.
+        """
         user_articles = Popularity_model.user_articles(user_db, user_id)
         recommended, ev = Popularity_model._key_select(name='author', art_db=art_db,
                                                       user_articles=user_articles,
@@ -161,7 +221,23 @@ class Popularity_model_department(Popularity_model):
     @staticmethod
     def _select_if_userdb(art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
                           limit: int, ignored: Union[list,bool]) -> [list, int]:
-        """ recommend method for case <user in database> """
+        """ recommend method for case <user in database>
+
+        Args:
+            art_db (pd.DataFrame): database of articles
+            user_db (pd.DataFrame): database of users and their read articles
+            user_id (int): user id used to find their articles in user_db
+            limit (int): number of articles to recommend.
+            ignored (Union[list,bool]): if ignored:
+                                        True (default) -> articles read by user
+                                        list -> list of ignored articles
+                                        empty list / False -> nothing ignored
+                                                  
+
+        Returns:
+            list: list of recommended articles.
+            int: evaluation of results.
+        """
         user_articles = Popularity_model.user_articles(user_db, user_id)
         recommended, ev = Popularity_model._key_select(name='department', art_db=art_db,
                                                       user_articles=user_articles,
@@ -179,15 +255,31 @@ class Popularity_model_final(Popularity_model):
 
     def __init__(self, articles_db: pd.DataFrame, user_db: pd.DataFrame, w: tuple = (1,1,1)):
         """
-        :param w: weight for each of submodels -> (popularity, author, department)
-        :type arg: tuple
+        Args:
+            w (tuple): weight for each of submodels -> (popularity, author, department)
         """
         super().__init__(articles_db,user_db)
         self.w = w
 
     def _select_if_userdb(self, art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
                           limit: int, ignored: Union[list,bool]) -> [list, tuple]:
-        """ recommend method for case <user in database> """
+        """ recommend method for case <user in database>
+
+        Args:
+            art_db (pd.DataFrame): database of articles
+            user_db (pd.DataFrame): database of users and their read articles
+            user_id (int): user id used to find their articles in user_db
+            limit (int): number of articles to recommend.
+            ignored (Union[list,bool]): if ignored:
+                                        True (default) -> articles read by user
+                                        list -> list of ignored articles
+                                        empty list / False -> nothing ignored
+                                                  
+
+        Returns:
+            list: list of recommended articles.
+            int: evaluation of results.
+        """
         user_articles = Popularity_model.user_articles(user_db, user_id)
         P, Pe = Popularity_model._select_if_userdb(art_db, user_db, user_id, limit, ignored)
         A, Ae = Popularity_model._key_select(name='author', art_db=art_db,
