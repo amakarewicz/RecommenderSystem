@@ -1,12 +1,13 @@
 import pandas as pd
 import numpy as np
+from typing import Union
 from dataclasses import dataclass
 from abstract_model_class import Recommendation_model
 import popularity_model # to example
-from types import Union
 
 
-def precision(rec: list, user_data: list) -> Union(float, np.nan):
+
+def precision(rec: list, user_data: list) -> float:
     """ function giving precision value for list of recommendations and user articles.
 
     Args:
@@ -22,7 +23,7 @@ def precision(rec: list, user_data: list) -> Union(float, np.nan):
     return np.nan
 
 
-def recall(rec: list, user_data: list) -> Union(float, np.nan):
+def recall(rec: list, user_data: list) -> float:
     """ function giving recall value for list of recommendations and user articles.
 
     Args:
@@ -37,7 +38,7 @@ def recall(rec: list, user_data: list) -> Union(float, np.nan):
         return len([i for i in rec if i in user_data]) / len(user_data)
     return np.nan
 
-def f1score(recall: float, precision: float) -> Union(float, np.nan):
+def f1score(recall: float, precision: float) -> float:
     """ harmonic mean of precision and recall
 
     Args:
@@ -76,12 +77,16 @@ class period_eval:
         4. Comparing given recommendations with articles actually read by user from second
         period.
 
+    Args:
+        Reverse (bool, optional): if True, swaps train and test articles. Defaults to False
     init atributes defined later.
         articles_1st_period: df containg articles from 1st period
         articles_2nd_period: df containg articles from 2nd period
         readers_1st_period: df containg user interactions from 1st period
         readers_2nd_period: df containg user interactions from 2nd period
     """
+    reverse: bool = False
+
     articles_1st_period: pd.DataFrame = None
     articles_2nd_period: pd.DataFrame = None
     readers_1st_period: pd.DataFrame = None
@@ -108,8 +113,12 @@ class period_eval:
             art_db (pd.DataFrame): articles dataframe
             user_db (pd.DataFrame): user interactions dataframe
         """
-        self.articles_1st_period = art_db.sort_values(by='pub_date')[:round(len(art_db)/2)]
-        self.articles_2nd_period = art_db.sort_values(by='pub_date')[round(len(art_db)/2):]
+        if self.reverse:
+            self.articles_1st_period = art_db.sort_values(by='pub_date', ascending = False)[:round(len(art_db)/2)]
+            self.articles_2nd_period = art_db.sort_values(by='pub_date', ascending = False)[round(len(art_db)/2):]
+        else:
+            self.articles_1st_period = art_db.sort_values(by='pub_date')[:round(len(art_db)/2)]
+            self.articles_2nd_period = art_db.sort_values(by='pub_date')[round(len(art_db)/2):]
         
         self.readers_1st_period = user_db[user_db['nzz_id'].isin(
                                   self.articles_1st_period['nzz_id'])]
@@ -185,8 +194,8 @@ if __name__ == "__main__":
 
     user_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\readers.csv')
 
-    x = period_eval()
-    s, r = x.evaluate_model( popularity_model.Popularity_model,
+    x = period_eval(reverse=False)
+    s, r = x.evaluate_model( popularity_model.Popularity_model_final,
                              art_db, user_db, limit = [5, 10, 15] )
     print(s)
-    print(r.head())
+    # print(r.head())
