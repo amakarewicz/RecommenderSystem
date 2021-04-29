@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from math import sqrt
-from types import Union
+from typing import Union
 
 
 def get_db(filename: str) -> pd.DataFrame:
@@ -39,7 +39,7 @@ def evaluation(ratio: tuple) -> float:
     return round(se,2)
 
 
-def precision(rec: list, user_data: list) -> Union(float, np.nan):
+def precision(rec: list, user_data: list) -> float:
     """ function giving precision value for list of recommendations and user articles.
 
     Args:
@@ -55,7 +55,7 @@ def precision(rec: list, user_data: list) -> Union(float, np.nan):
     return np.nan
 
 
-def recall(rec: list, user_data: list) -> Union(float, np.nan):
+def recall(rec: list, user_data: list) -> float:
     """ function giving recall value for list of recommendations and user articles.
 
     Args:
@@ -70,7 +70,7 @@ def recall(rec: list, user_data: list) -> Union(float, np.nan):
         return len([i for i in rec if i in user_data]) / len(user_data)
     return np.nan
 
-def f1score(recall: float, precision: float) -> Union(float, np.nan):
+def f1score(recall: float, precision: float) -> float:
     """ harmonic mean of precision and recall.
 
     Args:
