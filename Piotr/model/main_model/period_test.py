@@ -72,8 +72,9 @@ class period_eval:
         1. Getting articles read by user from first period.
         2. Creating database containing ALL articles from second period and articles
         read by user from first period
-        3. Recommending articles from given database basing ONLY on articles read in first
-        period, excluding them from recommendations
+        3. Recommending articles from given database basing ONLY on articles read by user 
+        in first period, excluding them later from recommendations (ignore = True).
+            > other users have all the interactions - needed for collaborative filthering model
         4. Comparing given recommendations with articles actually read by user from second
         period.
 
@@ -151,26 +152,29 @@ class period_eval:
 
         # for each user and each number of articles
         for i in range(1,1001):
+            # getting articles read by user in first period
+            user_articles_1 = self.user_articles(self.readers_1st_period, user_id = i)
+            # getting articles read by user in second period
+            user_articles_2 = self.user_articles(self.readers_2nd_period, user_id = i)
+            # broaden articles from second period by those read by user from 1st period
+            articles = self.articles_2nd_period.append(
+                    self.articles_1st_period[
+                    self.articles_1st_period['nzz_id'].isin(user_articles_1)])
+            # all the interactions except users from second period
+            interactions = user_db[~user_db.isin(user_articles_2).dropna()]
+
+            # gettin recommendations
+            model = Model(articles_db=articles, user_db=interactions, **kwargs)
+
             for l in limit:
-                # getting articles read by user in first period
-                user_articles_1 = self.user_articles(self.readers_1st_period, user_id = i)  
-                # broaden articles from second period by thos read by user from 1st period
-                articles = self.articles_2nd_period.append(
-                        self.articles_1st_period[
-                        self.articles_1st_period['nzz_id'].isin(user_articles_1)])
-
-                # gettin recommendations
-                model = Model(articles_db=articles, user_db=self.readers_1st_period, **kwargs)
                 recommended = model.recommend(user_id=i, limit=l,ignored=True)
-
-                # getting articles read by user in second period
-                user_articles_2 = self.user_articles(self.readers_2nd_period, user_id = i)
 
                 # append recall and precision
                 pre, rec = precision(recommended,user_articles_2), recall(recommended,user_articles_2)
                 results_db.append([ model.get_name(),i,l,len(user_articles_1),
                                     len(user_articles_2), pre, rec, f1score(pre,rec)
                                      ])
+                                     
         db = pd.DataFrame(results_db, columns=['model','user','number_of_recomm','train_articles',
                                                'test_articles','precision','recall', 'f1score'])
         # mean() for each number of recommendations, for test art, train art > 2
@@ -195,7 +199,7 @@ if __name__ == "__main__":
     user_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\readers.csv')
 
     x = period_eval(reverse=False)
-    s, r = x.evaluate_model( popularity_model.Popularity_model_final,
+    s, r = x.evaluate_model( popularity_model.Popularity_model,
                              art_db, user_db, limit = [5, 10, 15] )
     print(s)
     # print(r.head())
