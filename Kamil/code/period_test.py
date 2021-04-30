@@ -1,3 +1,4 @@
+from datetime import date
 import pandas as pd
 import numpy as np
 from dataclasses import dataclass
@@ -73,12 +74,11 @@ class period_eval:
 
         # for each user and each number of articles
         # gettin recommendations
-        print(self.readers_1st_period.head())
-        model = Model(articles_db=None,
-                    user_db=self.readers_1st_period)
 
+        from datetime import datetime
         for i in range(1,1001):
             for l in limit:
+                start = datetime.now()
                 # getting articles read by user in first period
                 user_articles_1 = self.user_articles(self.readers_1st_period, user_id = i)
                 # broaden articles from second period by thos read by user from 1st period
@@ -86,15 +86,19 @@ class period_eval:
                         self.articles_1st_period[
                         self.articles_1st_period['nzz_id'].isin(user_articles_1)])
 
+                model = Model(articles_db=self.articles_2nd_period,
+                            user_db=user_db, user_id=i)
                 recommended = model.recommend(user_id=i, limit=l,ignored=True)
-
+                print(len(recommended))
                 # getting articles read by user in second period
                 user_articles_2 = self.user_articles(self.readers_2nd_period, user_id = i)
-
-                # append recall and precision
-                results_db.append([ model.get_name(),i,l,len(user_articles_1),
+                results = [ model.get_name(),i,l,len(user_articles_1),
                                     len(user_articles_2), precision(recommended,user_articles_2),
-                                    recall(recommended,user_articles_2) ])
+                                    recall(recommended,user_articles_2)]
+                end = datetime.now()
+                print(results, (end-start))
+                # append recall and precision
+                results_db.append(results)
         db = pd.DataFrame(results_db, columns=['model','user','number_of_recomm','train_articles','test_articles','precision','recall'])
         
         return db
