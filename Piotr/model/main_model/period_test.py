@@ -3,7 +3,7 @@ import numpy as np
 from typing import Union
 from dataclasses import dataclass
 from abstract_model_class import Recommendation_model
-import popularity_model # to example
+import popularity_model # as example
 
 
 
@@ -79,13 +79,15 @@ class period_eval:
         period.
 
     Args:
-        Reverse (bool, optional): if True, swaps train and test articles. Defaults to False
+        train_test_ratio (tuple, optional): ratio of articles to train and to test. Defaults to (7,3)
+        reverse (bool, optional): if True, swaps train and test articles. Defaults to False
     init atributes defined later.
         articles_1st_period: df containg articles from 1st period
         articles_2nd_period: df containg articles from 2nd period
         readers_1st_period: df containg user interactions from 1st period
         readers_2nd_period: df containg user interactions from 2nd period
     """
+    train_test_ratio: tuple = (5,5)
     reverse: bool = False
 
     articles_1st_period: pd.DataFrame = None
@@ -114,12 +116,13 @@ class period_eval:
             art_db (pd.DataFrame): articles dataframe
             user_db (pd.DataFrame): user interactions dataframe
         """
+        slice_point = round(len(art_db)*self.train_test_ratio[0]/(sum(self.train_test_ratio)))
         if self.reverse:
-            self.articles_1st_period = art_db.sort_values(by='pub_date', ascending = False)[:round(len(art_db)/2)]
-            self.articles_2nd_period = art_db.sort_values(by='pub_date', ascending = False)[round(len(art_db)/2):]
+            self.articles_1st_period = art_db.sort_values(by='pub_date', ascending = False)[:slice_point]
+            self.articles_2nd_period = art_db.sort_values(by='pub_date', ascending = False)[slice_point:]
         else:
-            self.articles_1st_period = art_db.sort_values(by='pub_date')[:round(len(art_db)/2)]
-            self.articles_2nd_period = art_db.sort_values(by='pub_date')[round(len(art_db)/2):]
+            self.articles_1st_period = art_db.sort_values(by='pub_date')[:slice_point]
+            self.articles_2nd_period = art_db.sort_values(by='pub_date')[slice_point:]
         
         self.readers_1st_period = user_db[user_db['nzz_id'].isin(
                                   self.articles_1st_period['nzz_id'])]
