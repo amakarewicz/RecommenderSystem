@@ -38,7 +38,8 @@ class Popularity_model(Recommendation_model):
 
     MODEL_NAME = "popularity"
     
-    def recommend(self,user_id: int, limit: int = 5,ignored: Union[list, bool] = True, ev_return: bool = False) -> list:
+    def recommend(self,user_id: int, limit: int = 5,ignored: Union[list, bool] = True,
+                  ev_return: bool = False) -> list:
         """ recommend method, returning list of <limit> ID's recommended by model
 
         Args:
@@ -58,10 +59,10 @@ class Popularity_model(Recommendation_model):
         
         if self.user_db is None:
             # user database is not given
-            recommended, ev = self._select_if_no_userdb(self.articles_db, limit)
+            recommended, ev = self._select_if_no_userdb(self.articles_db, limit, ignored)
         elif user_id not in self.user_db.user_id.values:
             # user not in user database
-            recommended, ev = self._select_if_no_userdb(self.articles_db, limit)
+            recommended, ev = self._select_if_no_userdb(self.articles_db, limit, ignored)
         else:
             # user in user database
             recommended, ev = self._select_if_userdb(self.articles_db,
@@ -72,18 +73,52 @@ class Popularity_model(Recommendation_model):
         return recommended    
 
     @staticmethod
-    def _select_if_no_userdb(art_db: pd.DataFrame, limit: int) -> [list, int]:
+    def _select_if_no_userdb(art_db: pd.DataFrame, limit: int,
+                             ignored: Union[list,bool] ) -> [list, int]:
         """ recommend method for case <user not in DB> and <DB is None> 
 
         Args:
             art_db (pd.DataFrame): database of articles
             limit (int): database of users and their read articles
-
+            ignored (Union[list,bool]): if ignored:
+                                        True (default) -> articles read by user
+                                        list -> list of ignored articles
+                                        empty list / False -> nothing ignored
+                                        
         Returns:
             list: list of recommended articles.
             int: evaluation of results.
         """
-        recommended = list(art_db.sort_values(by='popularity',ascending=False).head(limit)['nzz_id'])
+        # old tactic - just <limit> of the most popular
+        # recommended = list(art_db.sort_values(by='popularity',ascending=False)\
+        #               .head(limit)['nzz_id'])
+        
+        # new tactic - the most popular grouped by department, choosing by probability
+        selected = art_db.groupby('department')['department_popularity'].min().reset_index() \
+                         .sort_values(by='department_popularity', ascending = False)[:-1]
+        ratio = tuple(selected['department_popularity'])
+        index = list(selected['department'])
+
+        recomm_for_each = []
+        if ignored in [True, False, []]:
+            # without ignoring any article (or given 'True' to ignore
+            # user articles but user is unknown here)
+    
+            for item in index:
+                selected = list(art_db[art_db['department'] == item] \
+                           .sort_values(by='popularity',ascending=False).head(limit)['nzz_id'])
+                recomm_for_each.append(selected)
+        else:
+            for item in index:
+                selected = list(art_db[art_db['department'] == item] \
+                           .sort_values(by='popularity',ascending=False) \
+                           .head(limit + len(ignored))['nzz_id'])
+                # excluding ignored
+                recomm_for_each.append([item for item in selected if item not in ignored]) 
+        
+        # choosing by probability from ratio p.e. P((1, 2, 3)) = (1/6, 2/6, 3/6)
+        recommended = choose_recomm(recomm_for_each,ratio,limit)
+        
         return recommended, 1
 
     @staticmethod
@@ -101,23 +136,23 @@ class Popularity_model(Recommendation_model):
                                         list -> list of ignored articles
                                         empty list / False -> nothing ignored
                                                   
-
         Returns:
             list: list of recommended articles.
             int: evaluation of results.
         """
         if ignored in [False, []]:
             # without ignoring any article
-            recommended = list(art_db.sort_values(by='popularity',ascending=False).head(limit)['nzz_id'])
+            recommended = list(art_db.sort_values(by='popularity',ascending=False) \
+                          .head(limit)['nzz_id'])
             return recommended, 1
         elif ignored is True:
             # ignoring articles read by user
-            ignored = Popularity_model.user_articles(user_db, user_id)  # artykuły przeczytane
+            ignored = Popularity_model.user_articles(user_db, user_id)
         # else: ignoring given articles
         selected = list(art_db.sort_values(by='popularity',ascending=False) \
                 .head(limit + len(ignored))['nzz_id'])
         # excluding ignored
-        recommended = [item for item in selected if item not in ignored][:limit]    # wyrzucam powtórki
+        recommended = [item for item in selected if item not in ignored][:limit]
         
         return recommended, 1
 
@@ -144,7 +179,8 @@ class Popularity_model(Recommendation_model):
         selected = art_db[art_db['nzz_id'].isin(user_articles)][name]
         # selecting those which <name> occures at least 2 times
         # excluding "Unknown" (no data given)
-        dupl = selected.value_counts()[selected.value_counts()>1].drop(index="Unknown", errors='ignore')
+        dupl = selected.value_counts()[selected.value_counts()>1] \
+                       .drop(index="Unknown", errors='ignore')
 
         # number of occurences
         ratio = tuple(dupl) 
@@ -155,12 +191,13 @@ class Popularity_model(Recommendation_model):
             # case when there is no recommendation
             return [], 0
 
+        recomm_for_each = []
         if ignored in [False, []]:
             # without ignoring any article
-            recomm_for_each = []
             for item in index:
-                selected = list(art_db[art_db[name] == item].sort_values(by='popularity',ascending=False) \
-                        .head(limit)['nzz_id'])
+                selected = list(art_db[art_db[name] == item] \
+                           .sort_values(by='popularity',ascending=False) \
+                           .head(limit)['nzz_id'])
                 recomm_for_each.append(selected)
 
         else:
@@ -169,10 +206,10 @@ class Popularity_model(Recommendation_model):
                 ignored = user_articles
 
             # else: ignoring given articles
-            recomm_for_each = []
             for item in index:
-                selected = list(art_db[art_db[name] == item].sort_values(by='popularity',ascending=False) \
-                        .head(limit + len(ignored))['nzz_id'])
+                selected = list(art_db[art_db[name] == item] \
+                           .sort_values(by='popularity',ascending=False) \
+                           .head(limit + len(ignored))['nzz_id'])
                 # excluding ignored
                 recomm_for_each.append([item for item in selected if item not in ignored]) 
         
@@ -202,7 +239,6 @@ class Popularity_model_author(Popularity_model):
                                         list -> list of ignored articles
                                         empty list / False -> nothing ignored
                                                   
-
         Returns:
             list: list of recommended articles.
             int: evaluation of results.
@@ -233,7 +269,6 @@ class Popularity_model_department(Popularity_model):
                                         list -> list of ignored articles
                                         empty list / False -> nothing ignored
                                                   
-
         Returns:
             list: list of recommended articles.
             int: evaluation of results.
@@ -275,7 +310,6 @@ class Popularity_model_final(Popularity_model):
                                         list -> list of ignored articles
                                         empty list / False -> nothing ignored
                                                   
-
         Returns:
             list: list of recommended articles.
             int: evaluation of results.
