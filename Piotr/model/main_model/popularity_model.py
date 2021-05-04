@@ -38,8 +38,9 @@ class Popularity_model(Recommendation_model):
 
     MODEL_NAME = "popularity"
     
-    def recommend(self,user_id: int, limit: int = 5,ignored: Union[list, bool] = True,
-                  ev_return: bool = False) -> list:
+    def recommend(self, user_id: int, limit: int = 5,ignored: Union[list, bool] = True,
+                  ev_return: bool = False, articles_db: pd.DataFrame = None,
+                  user_db: pd.DataFrame = None) -> list:
         """ recommend method, returning list of <limit> ID's recommended by model
 
         Args:
@@ -51,23 +52,28 @@ class Popularity_model(Recommendation_model):
                                                    empty list / False -> nothing ignored
                                                    Defaults to True.
             ev_return (bool, optional): if True, second return is eval value. Defaults to True.
-
+            articles_db (pd.DataFrame, optional): database of articles. Defaults to self...
+            user_db (pd.DataFrame, optional): database of users and their read articles self...
         Returns:
           list: list of recommended articles.
           int, optional: evaluation of results.
         """
-        
-        if self.user_db is None:
+        # allows to give art_db and user_db from outter space, defaults are from object
+        if articles_db is None: 
+            articles_db = self.articles_db
+        if user_db is None:
+            user_db = self.user_db
+
+        if user_db is None:
             # user database is not given
-            recommended, ev = self._select_if_no_userdb(self.articles_db, limit, ignored)
-        elif user_id not in self.user_db.user_id.values:
+            recommended, ev = self._select_if_no_userdb(articles_db, limit, ignored)
+        elif user_id not in user_db.user_id.values:
             # user not in user database
-            recommended, ev = self._select_if_no_userdb(self.articles_db, limit, ignored)
+            recommended, ev = self._select_if_no_userdb(articles_db, limit, ignored)
         else:
             # user in user database
-            recommended, ev = self._select_if_userdb(self.articles_db,
-                                                          self.user_db, user_id,
-                                                          limit, ignored)
+            recommended, ev = self._select_if_userdb(articles_db, user_db, user_id,
+                                                     limit, ignored)
         if ev_return == True:
             return recommended, ev
         return recommended    
@@ -84,7 +90,7 @@ class Popularity_model(Recommendation_model):
                                         True (default) -> articles read by user
                                         list -> list of ignored articles
                                         empty list / False -> nothing ignored
-                                        
+
         Returns:
             list: list of recommended articles.
             int: evaluation of results.
@@ -282,9 +288,9 @@ class Popularity_model_department(Popularity_model):
 
 class Popularity_model_final(Popularity_model):
     """ final model selecting by probability from:
-        popularity_model.recommend results
-        popularity_model_author.recommend results
-        popularity_model_department.recommend results
+        popularity_model.recommend() results
+        popularity_model_author.recommend() results
+        popularity_model_department.recommend() results
     """
     MODEL_NAME = "final"
 
