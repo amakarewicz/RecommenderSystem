@@ -17,7 +17,7 @@ class Recommendation_model(ABC):
              department, lead_text, pub_date, title, popularity]
         :type arg: pandas table
 
-        :param user_db: database of users and their read articles, containg:
+        :param user_db: database of users and their read articles, containing:
             [user_id, nzz_id]
         :type arg: pandas table
         """
@@ -40,6 +40,19 @@ class Recommendation_model(ABC):
     
     def filter_out_similar(self, person_recs: pd.DataFrame, feature_names: np.array, model: object, article_similarity: int, 
                                                     keyword_similarity: int) -> pd.DataFrame:
+        """
+        method filtering out similar articles from recommendations for a given user_articles
+        
+        Args:
+            person_recs (pd.DataFrame or list): recommendations for given user
+            feature_names (np.array): elements (words) from dictionary created by vectorization
+            model: fasttext model used for vectorization of articles' keywords
+            article_similarity (int): level of similarity between articles (from (0,1) range)
+            keyword_similarity (int): level of similarity between keywords (from (0,1) range)
+
+        Returns:
+            pd.DataFrame or list of filtered recommendations for given user
+        """
         # TODO - filtering if person_recs is a list !!!
         # list of recommended articles for user
         id_list = list(person_recs['nzz_id']) 
@@ -69,11 +82,16 @@ class Recommendation_model(ABC):
                 # handling occurences of empty articles
                 if not key_vec_1: key_vec_1 = [model.get_word_vector('') for i in range(5)]
                 if not key_vec_2: key_vec_2 = [model.get_word_vector('') for i in range(5)]
+
+                key_vec_1_sum = [0]*300
+                key_vec_2_sum = [0]*300
+                for j in range(5):
+                    key_vec_1_sum += key_vec_1[j]
+                    key_vec_2_sum += key_vec_2[j]
                 
                 # computing similarity
-                cos_matrix = [[cosine_similarity(x.reshape(1,-1),y.reshape(1,-1)) for x in key_vec_1] for y in key_vec_2]
-                similarity = np.mean(cos_matrix)
-                similar_df.loc[i, 'similarity'] = similarity
+                similarity = cosine_similarity(key_vec_1_sum.reshape(1,-1), key_vec_2_sum.reshape(1,-1))
+                similar_df.loc[i,'similarity'] = similarity[0][0]
 
             # filtering the recommendations
             new_indices = [x for i, x in enumerate(indices) if i not in list(similar_df.loc[similar_df.similarity >= keyword_similarity, 'first_art'])]
