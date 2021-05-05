@@ -145,14 +145,16 @@ class period_eval:
                       p.e. evaluate_model( Model=Popularity_model_final, ... , w=(100,1,1) )
 
         Returns:
-            [type]: [description]
+            [pd.DataFrame]: short results - recall, precision, f1score
+            [pd.DataFrame]: results for each user for each number of recommendations
+            [float]: coverage = len(all recommendations) / len(all articles)
         """
         # creating subperiods
         self.readers_in_half(art_db,user_db)
 
         # results of all users
         results_db = []
-
+        coverage_items = [] # to find coverage
         # for each user and each number of articles
         for i in range(1,1001):
             # getting articles read by user in first period
@@ -171,7 +173,7 @@ class period_eval:
 
             for l in limit:
                 recommended = model.recommend(user_id=i, limit=l,ignored=True)
-
+                coverage_items.extend(recommended)
                 # append recall and precision
                 pre, rec = precision(recommended,user_articles_2), recall(recommended,user_articles_2)
                 results_db.append([ model.get_name(),i,l,len(user_articles_1),
@@ -184,8 +186,8 @@ class period_eval:
         short_results = db[(db['test_articles'] > 2) & (db['train_articles'] > 2)] \
                         .groupby('number_of_recomm')[['precision','recall', 'f1score']] \
                         .mean().reset_index()
-
-        return short_results, db
+        coverage = len(set(coverage_items))/len(self.articles_2nd_period)
+        return short_results, db, coverage
 
 
 if __name__ == "__main__":
@@ -202,7 +204,7 @@ if __name__ == "__main__":
     user_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\readers.csv')
 
     x = period_eval(reverse=False)
-    s, r = x.evaluate_model( popularity_model.Popularity_model,
+    s, r, cov = x.evaluate_model( popularity_model.Popularity_model,
                              art_db, user_db, limit = [5, 10, 15] )
     print(s)
     # print(r.head())
