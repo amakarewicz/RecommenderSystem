@@ -53,7 +53,12 @@ class Recommendation_model(ABC):
         Returns:
             pd.DataFrame or list of filtered recommendations for given user
         """
-        # TODO - filtering if person_recs is a list !!!
+        # flag to check at the end whether to return list or dataframe
+        list_flag = False 
+        # if input data is in the list, convertion to dataframe takes place
+        if isinstance(person_recs, list):
+            list_flag = True
+            person_recs = pd.DataFrame(person_recs, columns=['nzz_id'])
         # list of recommended articles for user
         id_list = list(person_recs['nzz_id']) 
         # extracting indices of those articles (in articles_db)
@@ -98,9 +103,16 @@ class Recommendation_model(ABC):
             filtered_recs_ind = self.articles_db.loc[new_indices, 'nzz_id']
 
             new_recs = person_recs.loc[person_recs.nzz_id.isin(list(filtered_recs_ind))]
-            return new_recs
+            # different object type returned depending on input type
+            if list_flag is True:
+                return list(new_recs['nzz_id'])
+            else:
+                return new_recs
         else:
-            return person_recs
+            if list_flag is True:
+                return list(person_recs['nzz_id'])
+            else:
+                return person_recs
 
 
     @abstractmethod
