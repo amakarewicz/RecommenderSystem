@@ -47,7 +47,7 @@ class Recommendation_model(ABC):
         return user_articles
         
     @abstractmethod
-    def recommend(self, user_id: int, limit: int = 5, ignored: Union[list,bool] = True) -> list:
+    def recommend(self):
         """ recommend method, returning list of <limit> ID's recommended by model
 
         Args:
@@ -57,6 +57,8 @@ class Recommendation_model(ABC):
                                     True (default) -> articles read by user
                                     list -> list of ignored articles
                                     empty list / False -> not ignored. Defaults to True.
+            articles_db (pd.DataFrame, optional): database of articles
+            user_db (pd.DataFrame, optional): database of users and their read articles
 
         Returns:
             list: list of articles recommended
