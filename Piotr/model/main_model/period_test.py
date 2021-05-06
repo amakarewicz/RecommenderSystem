@@ -131,7 +131,7 @@ class period_eval:
         return
 
     def evaluate_model(self, Model: Recommendation_model, art_db: pd.DataFrame,
-                       user_db: pd.DataFrame,limit: list = [5, 10, 15],
+                       user_db: pd.DataFrame, limit: list = [5, 10, 15],
                        **kwargs) -> (pd.DataFrame, pd.DataFrame):
         """function evaluating model, returning dataframe of results for each user and
             each number of articles (limit)
@@ -145,14 +145,15 @@ class period_eval:
                       p.e. evaluate_model( Model=Popularity_model_final, ... , w=(100,1,1) )
 
         Returns:
-            [type]: [description]
+            [pd.DataFrame]: short results - recall, precision, f1score, coverage
+            [pd.DataFrame]: results for each user for each number of recommendations
         """
         # creating subperiods
         self.readers_in_half(art_db,user_db)
 
         # results of all users
         results_db = []
-
+        coverage_items = [[] for x in range(len(limit))] # to find coverage
         # for each user and each number of articles
         for i in range(1,1001):
             # getting articles read by user in first period
@@ -169,9 +170,9 @@ class period_eval:
             # gettin recommendations
             model = Model(articles_db=articles, user_db=interactions, **kwargs)
 
-            for l in limit:
+            for num, l in enumerate(limit):
                 recommended = model.recommend(user_id=i, limit=l,ignored=True)
-
+                coverage_items[num].extend(recommended)
                 # append recall and precision
                 pre, rec = precision(recommended,user_articles_2), recall(recommended,user_articles_2)
                 results_db.append([ model.get_name(),i,l,len(user_articles_1),
@@ -184,7 +185,8 @@ class period_eval:
         short_results = db[(db['test_articles'] > 2) & (db['train_articles'] > 2)] \
                         .groupby('number_of_recomm')[['precision','recall', 'f1score']] \
                         .mean().reset_index()
-
+        coverage = [len(set(it)) / len(self.articles_2nd_period) for it in coverage_items]
+        short_results['coverage'] = coverage
         return short_results, db
 
 
@@ -194,7 +196,6 @@ if __name__ == "__main__":
     limit: 5, 10, 15
     """
     
-
     art_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\art_clean_wt_all_popularity.csv')
     # shortened db
     art_db = art_db[['nzz_id', 'author', 'department', 'pub_date', 'popularity']]
@@ -202,7 +203,7 @@ if __name__ == "__main__":
     user_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\readers.csv')
 
     x = period_eval(reverse=False)
-    s, r = x.evaluate_model( popularity_model.Popularity_model,
+    s, r= x.evaluate_model( popularity_model.Popularity_model,
                              art_db, user_db, limit = [5, 10, 15] )
     print(s)
     # print(r.head())
