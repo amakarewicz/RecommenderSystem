@@ -23,7 +23,7 @@ class CF_model(Recommendation_model):
                         Defaults to 150.0.
         regularization (float, optional): regularization to apply.
                         Defaults to 100.0.
-        alpha (float, optional): confidence to apply in the interaction matrix (represents interaction confidence).
+        alpha (float, optional): alpha value to apply in the interaction matrix (represents interaction confidence).
                         Defaults to 50.0.
         iterations (int, optional): number of iterations of matrix approximation to perform.
                         Defaults to 15.
@@ -66,19 +66,6 @@ class CF_model(Recommendation_model):
             user_db["user_id"], user_db["nzz_id"]
         ).fillna(0)
 
-        # for article_id in reader_article_matrix_df:
-        #    if article_id in articles_db["nzz_id"].tolist():
-        #        reader_article_matrix_df[article_id] = 0
-        # for article in articles_db:
-        #    # TODO: Filter articles already in matrix
-        #    reader_article_matrix_df.insert(len(reader_article_matrix_df.columns), article_id, 0)
-        # print(reader_article_matrix_df.iloc[[user_id]])
-        # for article in articles_db["nzz_id"].tolist():
-        #    if article in reader_article_matrix_df.iloc[user_id]:
-        #        reader_article_matrix_df.at[user_id, article] = 0
-        # print(reader_article_matrix_df.iloc[[user_id]])
-        # print(reader_article_matrix_df.isna().sum())
-
         self.article_ids = {
             k: v for k, v in enumerate(reader_article_matrix_df.columns)
         }
@@ -108,7 +95,6 @@ class CF_model(Recommendation_model):
 
         Returns:
           list: list of recommended articles.
-          int, optional: evaluation of results.
         """
         if ignored == True:
             filter_already_liked_items = True
