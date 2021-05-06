@@ -81,7 +81,7 @@ class CF_model(Recommendation_model):
 
         super().__init__(articles_db=articles_db, user_db=user_db)
 
-    def recommend(self, user_id, ignored=True, limit=5):
+    def recommend(self, user_id, ignored=True, limit=5, ev_return=False):
         """ recommend method, returning list of <limit> ID's recommended by model
 
         Args:
@@ -122,4 +122,11 @@ class CF_model(Recommendation_model):
         else:
             recommendations_list = []
 
-        return recommendations_list
+        if ev_return:
+            scores = [
+                prediction[1]
+                for prediction in sorted_user_predictions
+            ]
+            return recommendations_list, scores
+        else:
+            return recommendations_list
