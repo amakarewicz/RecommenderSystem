@@ -3,18 +3,15 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from abstract_model_class import Recommendation_model
 from user_profiles_function import build_profiles
+import nltk
+from nltk.corpus import stopwords
+from sklearn.feature_extraction.text import TfidfVectorizer
+from vectorization_function import vectorize
 
 class ContentBasedRecommender(Recommendation_model):
     
     MODEL_NAME = 'Content-Based'
-
-    def __init__(self, articles_db: pd.DataFrame, user_db: pd.DataFrame, matrix: np.array = None):
-        """
-        Args:
-            
-        """
-        super().__init__(articles_db,user_db,matrix)
-        self.user_profiles = build_profiles(self.user_db, self.matrix, self.articles_db)
+       
         
     def _get_similar_items_to_user_profile(self, person_id, topn=1000):
         """method finding articles similar to the ones read by user
@@ -26,15 +23,17 @@ class ContentBasedRecommender(Recommendation_model):
         Returns:
             (list): topn articles similar to user's preferences
         """
-        
+        # vectorizing articles for each user
+        self.matrix, feature_names = vectorize(self.articles_db)
+        self.user_profiles = build_profiles(self.user_db, self.matrix, self.articles_db)
         # list of articles ids
         item_ids = self.articles_db['nzz_id'].tolist()
-        print(len(item_ids))
+        #print(len(item_ids))
         # Computes the cosine similarity between the user profile and all item profiles
         cosine_similarities = cosine_similarity(self.user_profiles[person_id], self.matrix)
         # Gets the top similar items
         similar_indices = cosine_similarities.argsort().flatten()[-topn:]
-        print(max(similar_indices))
+        #print(max(similar_indices))
         # Sort the similar items by similarity
         similar_items = sorted([(item_ids[i], cosine_similarities[0,i]) for i in similar_indices], key=lambda x: -x[1])
         return similar_items
@@ -59,6 +58,7 @@ class ContentBasedRecommender(Recommendation_model):
             (list or pd.DataFrame): recommended articles
         """
         # get similar (recommended) articles for user
+        print('user id\n', user_id)
         similar_items = self._get_similar_items_to_user_profile(user_id)
         if ignored is True :
             # ignoring articles already read by user
