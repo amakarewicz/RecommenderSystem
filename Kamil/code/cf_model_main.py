@@ -1,6 +1,6 @@
+from scipy.sparse.coo import coo_matrix
 from abstract_model_class import Recommendation_model
-from scipy.sparse import csr_matrix
-import pandas as pd
+import numpy as np
 import implicit
 
 
@@ -54,7 +54,7 @@ class CF_model(Recommendation_model):
         n_latent_factors=150,
         regularization=100.0,
         alpha=50.0,
-        iterations=15
+        iterations=15,
     ):
         model = implicit.als.AlternatingLeastSquares(
             factors=n_latent_factors,
@@ -62,27 +62,26 @@ class CF_model(Recommendation_model):
             iterations=iterations,
         )
 
-        reader_article_matrix_df = pd.crosstab(
-            user_db["user_id"], user_db["nzz_id"]
-        ).fillna(0)
+        user_db = user_db.copy()
+        user_db["user_id"] = user_db["user_id"].astype("category")
+        user_db["nzz_id"] = user_db["nzz_id"].astype("category")
 
-        self.article_ids = {
-            k: v for k, v in enumerate(reader_article_matrix_df.columns)
-        }
-        self.reader_ids = {v: k for k, v in enumerate(reader_article_matrix_df.index)}
+        users = dict(enumerate(user_db["user_id"].cat.categories))
+        self.reader_ids = {k: v for v, k in users.items()}
+        self.article_ids = dict(enumerate(user_db["nzz_id"].cat.categories)) 
 
-        reader_article_matrix = reader_article_matrix_df.to_numpy()
-        # Type cast do float bo inczej metoda nie obsługuje
-        reader_article_csr_matrix = csr_matrix(reader_article_matrix).asfptype() * alpha
+        reader_article_matrix = coo_matrix((np.ones(user_db.shape[0]), (user_db["nzz_id"].cat.codes.copy(), user_db["user_id"].cat.codes.copy())))
 
-        model.fit(reader_article_csr_matrix.T, show_progress=True)
+        reader_article_csr_matrix = reader_article_matrix.T * alpha
+
+        model.fit(reader_article_csr_matrix.T, show_progress=False)
         self.reader_article_csr_matrix = reader_article_csr_matrix
         self.model = model
 
         super().__init__(articles_db=articles_db, user_db=user_db)
 
     def recommend(self, user_id, ignored=True, limit=5, ev_return=False):
-        """ recommend method, returning list of <limit> ID's recommended by model
+        """recommend method, returning list of <limit> ID's recommended by model
 
         Args:
             user_id (int): user id used to find their articles in user_db
@@ -92,9 +91,11 @@ class CF_model(Recommendation_model):
                                                    list -> list of ignored articles
                                                    empty list / False -> nothing ignored
                                                    Defaults to True.
+            ev_return (bool, optional): if True, second return is list of recommendation scores. Defaults to True.
 
         Returns:
           list: list of recommended articles.
+          list, optional: list of recommendation scores.
         """
         if ignored == True:
             filter_already_liked_items = True
@@ -110,7 +111,7 @@ class CF_model(Recommendation_model):
         if user_id in self.reader_ids:
             sorted_user_predictions = self.model.recommend(
                 self.reader_ids[user_id],
-                self.reader_article_csr_matrix,
+                self.reader_article_csr_matrix.tocsr(),
                 N=limit,
                 filter_already_liked_items=filter_already_liked_items,
                 filter_items=articles_to_ignore,
@@ -123,10 +124,7 @@ class CF_model(Recommendation_model):
             recommendations_list = []
 
         if ev_return:
-            scores = [
-                prediction[1]
-                for prediction in sorted_user_predictions
-            ]
+            scores = [prediction[1] for prediction in sorted_user_predictions]
             return recommendations_list, scores
         else:
             return recommendations_list
