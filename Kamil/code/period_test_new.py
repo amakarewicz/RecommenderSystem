@@ -6,7 +6,7 @@ from abstract_model_class import Recommendation_model
 from cf_model_main import CF_model
 from datetime import datetime
 import os
-
+from tqdm import tqdm
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 
@@ -151,9 +151,9 @@ class period_eval:
 
         # results of all users
         results_db = []
-
+        coverage_items = [[] for x in range(len(limit))] # to find coverage
         # for each user and each number of articles
-        for i in range(1,1001):
+        for i in tqdm(range(1,1001)):
             # getting articles read by user in first period
             user_articles_1 = self.user_articles(self.readers_1st_period, user_id = i)
             # getting articles read by user in second period
@@ -173,8 +173,9 @@ class period_eval:
             #gettin recommendations
             model = Model(articles_db=articles, user_db=interactions, **kwargs)
 
-            for l in limit:
+            for num, l in enumerate(limit):
                 recommended = model.recommend(user_id=i, limit=l,ignored=True)
+                coverage_items[num].extend(recommended)
 
                 # append recall and precision
                 pre, rec = precision(recommended,user_articles_2), recall(recommended,user_articles_2)
@@ -187,9 +188,10 @@ class period_eval:
         short_results = db[(db['test_articles'] > 2) & (db['train_articles'] > 2)] \
                         .groupby('number_of_recomm')[['precision','recall', 'f1score']] \
                         .mean().reset_index()
+        coverage = [len(set(it)) / len(self.articles_2nd_period) for it in coverage_items]
+        short_results['coverage'] = coverage
 
         return short_results, db
-
 
 if __name__ == "__main__":
     """ example:
@@ -205,7 +207,10 @@ if __name__ == "__main__":
     user_db = get_db("readers.csv")
 
     x = period_eval(reverse=False)
+    start = datetime.now()
     s, r = x.evaluate_model( CF_model,
                              art_db, user_db, limit = [5, 10, 15] )
+    end = datetime.now()
+    print(f"evaluation time: {end-start}")
     print(s)
     # print(r.head())
