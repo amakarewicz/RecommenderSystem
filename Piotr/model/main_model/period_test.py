@@ -46,7 +46,7 @@ def f1score(recall: float, precision: float) -> float:
         precision (float): precision value
 
     Returns:
-        [float, np.nan] : f1_score value, np.nan if recall or precision is np.nan
+        [floact, np.nan] : f1_score value, np.nan if recall or precision is np.nan
     """
     if recall == 0 or precision == 0:
         return 0
