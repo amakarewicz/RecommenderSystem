@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from abstract_model_class import Recommendation_model
-from user_profiles_function import build_profiles
+from user_profiles_function_testing import build_profiles
 import nltk
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -24,13 +24,13 @@ class ContentBasedRecommender(Recommendation_model):
             (list): topn articles similar to user's preferences
         """
         # vectorizing articles for each user
-        self.matrix, feature_names = vectorize(self.articles_db)
-        self.user_profiles = build_profiles(self.user_db, self.matrix, self.articles_db)
+        self.matrix, feature_names = vectorize(self.articles_db['content'])
+        self.user_profile = build_profiles(self.user_db, self.matrix, self.articles_db, person_id)
         # list of articles ids
         item_ids = self.articles_db['nzz_id'].tolist()
         #print(len(item_ids))
         # Computes the cosine similarity between the user profile and all item profiles
-        cosine_similarities = cosine_similarity(self.user_profiles[person_id], self.matrix)
+        cosine_similarities = cosine_similarity(self.user_profile, self.matrix)
         # Gets the top similar items
         similar_indices = cosine_similarities.argsort().flatten()[-topn:]
         #print(max(similar_indices))
