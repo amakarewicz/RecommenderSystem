@@ -31,7 +31,7 @@ class Recommendation_model(ABC):
 
     def get_name(self) -> str:
         """ method returning self.MODEL_NAME
-
+        
         Returns:
             str: model name
         """
@@ -80,10 +80,10 @@ class Recommendation_model(ABC):
         # extracting pairs of similar articles based on cosine similarities between vectors
         matrix_lower = np.tril(cosine_similarity(self.matrix[indices]))
         np.fill_diagonal(matrix_lower, 0)
-        similar_pairs = np.where(matrix_lower>=article_similarity)
+        similar_pairs = np.where(matrix_lower >= article_similarity)
         similar_df = pd.DataFrame(np.column_stack(similar_pairs),columns=['first_art','second_art'])
 
-        # extracting keywords for each pair and computing similrity between them 
+        # extracting keywords for each pair and computing similarity between them 
         if len(similar_df) >= 1:
             for i in range(len(similar_df)):
                 id_1 = similar_df.loc[i,'first_art']
