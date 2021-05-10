@@ -68,9 +68,17 @@ class CF_model(Recommendation_model):
 
         users = dict(enumerate(user_db["user_id"].cat.categories))
         self.reader_ids = {k: v for v, k in users.items()}
-        self.article_ids = dict(enumerate(user_db["nzz_id"].cat.categories)) 
+        self.article_ids = dict(enumerate(user_db["nzz_id"].cat.categories))
 
-        reader_article_matrix = coo_matrix((np.ones(user_db.shape[0]), (user_db["nzz_id"].cat.codes.copy(), user_db["user_id"].cat.codes.copy())))
+        reader_article_matrix = coo_matrix(
+            (
+                np.ones(user_db.shape[0]),
+                (
+                    user_db["nzz_id"].cat.codes.copy(),
+                    user_db["user_id"].cat.codes.copy(),
+                ),
+            )
+        )
 
         reader_article_csr_matrix = reader_article_matrix.T * alpha
 
@@ -80,7 +88,7 @@ class CF_model(Recommendation_model):
 
         super().__init__(articles_db=articles_db, user_db=user_db)
 
-    def recommend(self, user_id, ignored=True, limit=5, ev_return=False):
+    def recommend(self, user_id, ignored=True, limit=5,articles_db=None, user_db=None, ev_return=False):
         """recommend method, returning list of <limit> ID's recommended by model
 
         Args:
@@ -108,6 +116,7 @@ class CF_model(Recommendation_model):
             articles_to_ignore = [
                 k for k, v in self.article_ids.items() if v in ignored
             ]
+        
         if user_id in self.reader_ids:
             sorted_user_predictions = self.model.recommend(
                 self.reader_ids[user_id],

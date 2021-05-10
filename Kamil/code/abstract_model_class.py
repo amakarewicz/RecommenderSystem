@@ -27,6 +27,12 @@ class Recommendation_model(ABC):
         '''
         return self.MODEL_NAME
 
+    @staticmethod
+    def user_articles(user_db, user_id: int) -> list:
+        '''method returning articles read by given user'''
+        user_articles = user_db[user_db['user_id'] == user_id].iloc[:,1].tolist()   
+        return user_articles
+
     @abstractmethod
     def recommend(self, user_id=1, limit=5, ignored=True):
         '''recommend method, returning list of <limit> ID's recommended by model
