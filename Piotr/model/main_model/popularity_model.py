@@ -56,7 +56,7 @@ class Popularity_model(Recommendation_model):
             user_db (pd.DataFrame, optional): database of users and their read articles self...
         Returns:
           list: list of recommended articles.
-          int, optional: evaluation of results.
+          int/ list, optional: evaluation of results / evaluation for each result.
         """
         # allows to give art_db and user_db from outter space, defaults are from object
         if articles_db is None: 
@@ -64,16 +64,14 @@ class Popularity_model(Recommendation_model):
         if user_db is None:
             user_db = self.user_db
 
-        if user_db is None:
-            # user database is not given
-            recommended, ev = self._select_if_no_userdb(articles_db, limit, ignored)
-        elif user_id not in user_db.user_id.values:
-            # user not in user database
-            recommended, ev = self._select_if_no_userdb(articles_db, limit, ignored)
-        else:
+        if not ( (user_db is None) and (user_id not in user_db.user_id.values) ):
             # user in user database
             recommended, ev = self._select_if_userdb(articles_db, user_db, user_id,
                                                      limit, ignored)
+        else:
+            # user not in user db or no db
+            recommended, ev = self._select_if_no_userdb(articles_db, limit, ignored)
+
         if ev_return == True:
             return recommended, ev
         return recommended    
@@ -294,7 +292,7 @@ class Popularity_model_final(Popularity_model):
     """
     MODEL_NAME = "final"
 
-    def __init__(self, articles_db: pd.DataFrame, user_db: pd.DataFrame, w: tuple = (1,1,1)):
+    def __init__(self, articles_db: pd.DataFrame, user_db: pd.DataFrame, w: tuple = (19,33,0)):
         """
         Args:
             w (tuple): weight for each of submodels -> (popularity, author, department)
@@ -330,4 +328,10 @@ class Popularity_model_final(Popularity_model):
                                                       limit=limit, ignored=ignored)
         # choosing by probability from ratio p.e. P((1, 2, 3)) = (1/6, 2/6, 3/6)
         recommended = choose_recomm([P,A,D],(Pe,Ae,De),limit,w = self.w)
-        return recommended, (Pe,Ae,De)
+
+        # score dla każdego z artykułów:
+        ev = []
+        for item in recommended:
+            score = art_db[art_db['nzz_id']==item][['popularity']]
+            ev.append(score.values[0][0]**(1/5))
+        return recommended, ev

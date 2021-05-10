@@ -30,7 +30,7 @@ class ImplicitModel:
         # Type cast do float bo inczej metoda nie obsługuje
         reader_article_csr_matrix = csr_matrix(reader_article_matrix).asfptype() * self.alpha
 
-        self.model.fit(reader_article_csr_matrix.T, show_progress=False)
+        self.model.fit(reader_article_csr_matrix.T, show_progress=True)
         # U, sigma, Vt = svds(reader_article_csr_matrix, k=self.n_latent_factors)
         # sigma = np.diag(sigma)
         #
