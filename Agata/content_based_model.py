@@ -7,6 +7,14 @@ from user_profiles_function import build_profiles
 class ContentBasedRecommender(Recommendation_model):
     
     MODEL_NAME = 'Content-Based'
+
+    def __init__(self, articles_db: pd.DataFrame, user_db: pd.DataFrame, matrix: np.array = None):
+        """
+        Args:
+            
+        """
+        super().__init__(articles_db,user_db,matrix)
+        self.user_profiles = build_profiles(self.user_db, self.matrix, self.articles_db)
         
     def _get_similar_items_to_user_profile(self, person_id, topn=1000):
         """method finding articles similar to the ones read by user
@@ -18,12 +26,11 @@ class ContentBasedRecommender(Recommendation_model):
         Returns:
             (list): topn articles similar to user's preferences
         """
-        # building 'user profile' for each user from user_db based on vectorized articles read by them
-        user_profiles = build_profiles(self.user_db, self.matrix, self.articles_db)
+        
         # list of articles ids
         item_ids = self.articles_db['nzz_id'].tolist()
         # Computes the cosine similarity between the user profile and all item profiles
-        cosine_similarities = cosine_similarity(user_profiles[person_id], self.matrix)
+        cosine_similarities = cosine_similarity(self.user_profiles[person_id], self.matrix)
         # Gets the top similar items
         similar_indices = cosine_similarities.argsort().flatten()[-topn:]
         # Sort the similar items by similarity
@@ -79,10 +86,10 @@ class ContentBasedRecommender(Recommendation_model):
                     "nzz_id",
                     "catchline",
                     "content",
+                    "content_length",
                     "department",
                     "lead_text",
                     "pub_date",
-                    "content_len"
                 ]
             ]
 
