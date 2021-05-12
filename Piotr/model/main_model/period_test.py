@@ -4,7 +4,10 @@ from typing import Union
 from dataclasses import dataclass
 from abstract_model_class import Recommendation_model
 import popularity_model # as example
-
+from datetime import datetime
+import os
+from tqdm import tqdm
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 
 def precision(rec: list, user_data: list) -> float:
@@ -109,7 +112,7 @@ class period_eval:
         user_articles = user_db[user_db['user_id'] == user_id].iloc[:,1].tolist()   
         return user_articles
 
-    def readers_in_half(self,art_db: pd.DataFrame, user_db: pd.DataFrame):
+    def readers_in_half(self, art_db: pd.DataFrame, user_db: pd.DataFrame):
         """ method creating articles and user interactions database from each period
 
         Args:
@@ -117,12 +120,12 @@ class period_eval:
             user_db (pd.DataFrame): user interactions dataframe
         """
         slice_point = round(len(art_db)*self.train_test_ratio[0]/(sum(self.train_test_ratio)))
-        if self.reverse:
-            self.articles_1st_period = art_db.sort_values(by='pub_date', ascending = False)[:slice_point]
-            self.articles_2nd_period = art_db.sort_values(by='pub_date', ascending = False)[slice_point:]
-        else:
-            self.articles_1st_period = art_db.sort_values(by='pub_date')[:slice_point]
-            self.articles_2nd_period = art_db.sort_values(by='pub_date')[slice_point:]
+        
+
+        sorted_art_db = art_db.sort_values(by='pub_date', ascending =  not self.reverse)
+
+        self.articles_1st_period = sorted_art_db[:slice_point]
+        self.articles_2nd_period = sorted_art_db[slice_point:]
         
         self.readers_1st_period = user_db[user_db['nzz_id'].isin(
                                   self.articles_1st_period['nzz_id'])]
@@ -155,24 +158,29 @@ class period_eval:
         results_db = []
         coverage_items = [[] for x in range(len(limit))] # to find coverage
         # for each user and each number of articles
-        for i in range(1,1001):
+        for i in tqdm(range(1,1001)):
             # getting articles read by user in first period
             user_articles_1 = self.user_articles(self.readers_1st_period, user_id = i)
             # getting articles read by user in second period
             user_articles_2 = self.user_articles(self.readers_2nd_period, user_id = i)
+
             # broaden articles from second period by those read by user from 1st period
             articles = self.articles_2nd_period.append(
                     self.articles_1st_period[
                     self.articles_1st_period['nzz_id'].isin(user_articles_1)])
+
             # all the interactions except users from second period
-            interactions = user_db[~user_db.isin(user_articles_2).dropna()]
+            interactions = user_db[
+                                   ~((user_db["user_id"] == i) 
+                                   & (user_db["nzz_id"].isin(user_articles_2)))]
 
             # gettin recommendations
             model = Model(articles_db=articles, user_db=interactions, **kwargs)
 
             for num, l in enumerate(limit):
-                recommended = model.recommend(user_id=i, limit=l,ignored=True)
+                recommended = model.recommend(user_id=i, limit=l, ignored=True)
                 coverage_items[num].extend(recommended)
+
                 # append recall and precision
                 pre, rec = precision(recommended,user_articles_2), recall(recommended,user_articles_2)
                 results_db.append([ model.get_name(),i,l,len(user_articles_1),
@@ -181,12 +189,14 @@ class period_eval:
                                      
         db = pd.DataFrame(results_db, columns=['model','user','number_of_recomm','train_articles',
                                                'test_articles','precision','recall', 'f1score'])
+        
         # mean() for each number of recommendations, for test art, train art > 2
         short_results = db[(db['test_articles'] > 2) & (db['train_articles'] > 2)] \
                         .groupby('number_of_recomm')[['precision','recall', 'f1score']] \
                         .mean().reset_index()
         coverage = [len(set(it)) / len(self.articles_2nd_period) for it in coverage_items]
         short_results['coverage'] = coverage
+        
         return short_results, db
 
 
@@ -198,7 +208,7 @@ if __name__ == "__main__":
     
     art_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\art_clean_wt_all_popularity.csv')
     # shortened db
-    art_db = art_db[['nzz_id', 'author', 'department', 'pub_date', 'popularity']]
+    art_db = art_db[['nzz_id', 'author', 'department', 'pub_date', 'popularity', 'department_popularity']]
 
     user_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\readers.csv')
 

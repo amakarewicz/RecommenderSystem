@@ -3,11 +3,11 @@ import numpy as np
 from typing import Union
 from dataclasses import dataclass
 from abstract_model_class import Recommendation_model
-from cf_model_main import CF_model # as example
 from datetime import datetime
 import os
 from tqdm import tqdm
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
+
 
 
 def precision(rec: list, user_data: list) -> float:
@@ -49,7 +49,7 @@ def f1score(recall: float, precision: float) -> float:
         precision (float): precision value
 
     Returns:
-        [floact, np.nan] : f1_score value, np.nan if recall or precision is np.nan
+        [float, np.nan] : f1_score value, np.nan if recall or precision is np.nan
     """
     if recall == 0 or precision == 0:
         return 0
@@ -70,7 +70,7 @@ def get_db(filename: str) -> pd.DataFrame:
 
 
 @dataclass
-class period_eval:
+class period_eval_new:
     """ test evaluating models precision and recall.
         1. Getting articles read by user from first period.
         2. Creating database containing ALL articles from second period and articles
@@ -121,8 +121,11 @@ class period_eval:
         """
         slice_point = round(len(art_db)*self.train_test_ratio[0]/(sum(self.train_test_ratio)))
         
-
-        sorted_art_db = art_db.sort_values(by='pub_date', ascending =  not self.reverse)
+        if self.reverse:
+            sorted_art_db = art_db.sort_values(by='pub_date', ascending = False)
+            
+        else:
+            sorted_art_db = art_db.sort_values(by='pub_date')
 
         self.articles_1st_period = sorted_art_db[:slice_point]
         self.articles_2nd_period = sorted_art_db[slice_point:]
@@ -134,7 +137,7 @@ class period_eval:
         return
 
     def evaluate_model(self, Model: Recommendation_model, art_db: pd.DataFrame,
-                       user_db: pd.DataFrame, limit: list = [5, 10, 15],
+                       user_db: pd.DataFrame,limit: list = [5, 10, 15],
                        **kwargs) -> (pd.DataFrame, pd.DataFrame):
         """function evaluating model, returning dataframe of results for each user and
             each number of articles (limit)
@@ -148,8 +151,7 @@ class period_eval:
                       p.e. evaluate_model( Model=Popularity_model_final, ... , w=(100,1,1) )
 
         Returns:
-            [pd.DataFrame]: short results - recall, precision, f1score, coverage
-            [pd.DataFrame]: results for each user for each number of recommendations
+            [type]: [description]
         """
         # creating subperiods
         self.readers_in_half(art_db,user_db)
@@ -163,22 +165,22 @@ class period_eval:
             user_articles_1 = self.user_articles(self.readers_1st_period, user_id = i)
             # getting articles read by user in second period
             user_articles_2 = self.user_articles(self.readers_2nd_period, user_id = i)
-
             # broaden articles from second period by those read by user from 1st period
+
             articles = self.articles_2nd_period.append(
                     self.articles_1st_period[
                     self.articles_1st_period['nzz_id'].isin(user_articles_1)])
 
+            # BUG: To usuwa artykuły, które przeczytał dany użytkownik u wszystkich użytkowników
             # all the interactions except users from second period
-            interactions = user_db[
-                                   ~((user_db["user_id"] == i) 
-                                   & (user_db["nzz_id"].isin(user_articles_2)))]
+            #interactions = user_db[~user_db["nzz_id"].isin(user_articles_2).dropna()]
 
-            # gettin recommendations
+            interactions = user_db[~((user_db["user_id"] == i) & (user_db["nzz_id"].isin(user_articles_2)))]
+            #gettin recommendations
             model = Model(articles_db=articles, user_db=interactions, **kwargs)
 
             for num, l in enumerate(limit):
-                recommended = model.recommend(user_id=i, limit=l, ignored=True)
+                recommended = model.recommend(user_id=i, limit=l,ignored=True)
                 coverage_items[num].extend(recommended)
 
                 # append recall and precision
@@ -186,17 +188,15 @@ class period_eval:
                 results_db.append([ model.get_name(),i,l,len(user_articles_1),
                                     len(user_articles_2), pre, rec, f1score(pre,rec)
                                      ])
-                                     
         db = pd.DataFrame(results_db, columns=['model','user','number_of_recomm','train_articles',
                                                'test_articles','precision','recall', 'f1score'])
-        
         # mean() for each number of recommendations, for test art, train art > 2
         short_results = db[(db['test_articles'] > 2) & (db['train_articles'] > 2)] \
                         .groupby('number_of_recomm')[['precision','recall', 'f1score']] \
                         .mean().reset_index()
         coverage = [len(set(it)) / len(self.articles_2nd_period) for it in coverage_items]
         short_results['coverage'] = coverage
-        
+
         return short_results, db
 
 
@@ -207,14 +207,17 @@ if __name__ == "__main__":
     """
     
 
-    art_db = get_db(r'C:\Users\a814809\code-projects\python\WPy64-3880\projects\RecommenderSystem\art_clean_wt_all_popularity.csv')
+    art_db = get_db("art_clean_wt_all_popularity.csv")
     # shortened db
-    art_db = art_db[['nzz_id', 'author', 'department', 'pub_date', 'popularity', 'department_popularity']]
+    art_db = art_db[['nzz_id', 'author', 'department', 'pub_date', 'popularity']]
 
-    user_db = get_db(r'C:\Users\a814809\code-projects\python\WPy64-3880\projects\RecommenderSystem\readers.csv')
+    user_db = get_db("readers.csv")
 
-    x = period_eval()
-    r = x.evaluate_model( CF_model,
-                          art_db, user_db, limit = [5, 10, 15] )
-    print(r)
-    print(r.groupby('number_of_recomm')[['precision','recall']].mean())
+    x = period_eval(reverse=False)
+    start = datetime.now()
+    s, r = x.evaluate_model( CF_model,
+                             art_db, user_db, limit = [5, 10, 15] )
+    end = datetime.now()
+    print(f"evaluation time: {end-start}")
+    print(s)
+    # print(r.head())
