@@ -156,7 +156,7 @@ class period_eval:
         results_db = []
         coverage_items = [[] for x in range(len(limit))] # to find coverage
         # for each user and each number of articles
-        for i in range(1,11):
+        for i in range(1,1001):
             if i == 395 or i==402: continue
             # getting articles read by user in first period
             user_articles_1 = self.user_articles(self.readers_1st_period, user_id = i)

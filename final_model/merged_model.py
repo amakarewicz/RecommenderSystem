@@ -6,6 +6,8 @@ import numpy as np
 from typing import Union
 from popularity_model import Popularity_model_final
 from cf_model_main import CF_model
+from content_based_model import ContentBasedRecommender
+from scipy import sparse
 
 
 def choose_recomm(models_recommendations: list, w_inner: list, limit: int,
@@ -71,7 +73,7 @@ class Recommendation(Recommendation_model):
 
     """
 
-    def __init__(self, articles_db: pd.DataFrame, user_db: pd.DataFrame, w: tuple = (1,1,1)):
+    def __init__(self, articles_db: pd.DataFrame, user_db: pd.DataFrame, matrix: np.array = None, w: tuple = (1,1,1)):
         """
         Args:
             articles_db (pd.DataFrame, optional): database of articles, containing for each:
@@ -87,7 +89,7 @@ class Recommendation(Recommendation_model):
                        popularity, colaborative filtering, content based.
                        Defaults to None.
         """
-        super().__init__(articles_db,user_db)
+        super().__init__(articles_db,user_db,matrix)
         self.w = w
 
 
@@ -118,15 +120,16 @@ class Recommendation(Recommendation_model):
             m_colaborative = CF_model(
                 articles_db=self.articles_db, user_db=self.user_db
             )
-            # m_content_based = content_based_model(articles_db = self.articles_db,
-            #                                       user_dn = self.user_db)
+            m_content_based = ContentBasedRecommender(articles_db = self.articles_db,
+                                                  user_db = self.user_db, matrix = self.matrix)
 
-            models = [m_popularity, m_colaborative]
+            models = [m_popularity, m_colaborative, m_content_based]
             # user in user database
             recomm_for_each = []
             evaluations = []
-
+            i = 0
             for model in models:
+                i +=1
                 # tutaj zmienic z wagami dla poszczególnego modelu
                 recommendation, evaluation = model.recommend(
                     user_id,
@@ -139,6 +142,8 @@ class Recommendation(Recommendation_model):
                 sources.extend([(recomm, model.get_name()) for recomm in recommendation])
                 recomm_for_each.append(recommendation)
                 evaluations.append(evaluation)
+                print(i, recomm_for_each)
+                print(i, evaluations)
             # choose using probability from given weights as ratio tuple, p.e. (1,2,3)
             recommended = choose_recomm(recomm_for_each, evaluations, limit, self.w)
         else:
@@ -163,7 +168,7 @@ class Recommendation(Recommendation_model):
 
 if __name__ == "__main__":
 
-    art_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\art_clean_wt_all_popularity.csv')
-    user_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\readers.csv')
-    m_merged = Recommendation(art_db, user_db, w=(1, 1))
+    art_db = get_db(r'C:\Users\a814810\OneDrive - Atos\Documents\RecommenderSystem\final_model\articles_final.csv')
+    user_db = get_db(r'C:\Users\a814810\OneDrive - Atos\Documents\RecommenderSystem\final_model\readers.csv')
+    m_merged = Recommendation(art_db, user_db, w=(1, 1, 1), matrix = sparse.load_npz(r'C:\Users\a814810\OneDrive - Atos\Documents\RecommenderSystem\final_model\vec_matrix.npz'))
     print(f"merged recommendations:{m_merged.recommend(user_id=1)}")
