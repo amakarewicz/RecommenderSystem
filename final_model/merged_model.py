@@ -127,9 +127,7 @@ class Recommendation(Recommendation_model):
             # user in user database
             recomm_for_each = []
             evaluations = []
-            i = 0
             for model in models:
-                i +=1
                 # tutaj zmienic z wagami dla poszczególnego modelu
                 recommendation, evaluation = model.recommend(
                     user_id,
@@ -142,8 +140,6 @@ class Recommendation(Recommendation_model):
                 sources.extend([(recomm, model.get_name()) for recomm in recommendation])
                 recomm_for_each.append(recommendation)
                 evaluations.append(evaluation)
-                print(i, recomm_for_each)
-                print(i, evaluations)
             # choose using probability from given weights as ratio tuple, p.e. (1,2,3)
             recommended = choose_recomm(recomm_for_each, evaluations, limit, self.w)
         else:
