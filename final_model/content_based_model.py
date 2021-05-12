@@ -79,7 +79,7 @@ class ContentBasedRecommender(Recommendation_model):
             recommendations_df = pd.DataFrame(similar_items_filtered, columns=['nzz_id', 'recStrength']).head(limit)
             recommendations = list(recommendations_df['nzz_id'])
             evaluations = list(recommendations_df['recStrength'])
-            return recommendations_df, evaluations
+            return recommendations, evaluations
         
         if verbose:
             if user_db is None:
