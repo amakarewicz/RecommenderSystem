@@ -78,7 +78,7 @@ class Popularity_model(Recommendation_model):
 
     @staticmethod
     def _select_if_no_userdb(art_db: pd.DataFrame, limit: int,
-                             ignored: Union[list,bool] ) -> [list, int]:
+                             ignored: Union[list,bool] ):
         """ recommend method for case <user not in DB> and <DB is None> 
 
         Args:
@@ -127,7 +127,7 @@ class Popularity_model(Recommendation_model):
 
     @staticmethod
     def _select_if_userdb(art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
-                          limit: int, ignored: Union[list,bool]) -> [list, int]:
+                          limit: int, ignored: Union[list,bool]):
         """ recommend method for case <user in database>
 
         Args:
@@ -162,7 +162,7 @@ class Popularity_model(Recommendation_model):
 
     @staticmethod
     def _key_select(name: str, art_db: pd.DataFrame, user_articles: list,
-                    limit: int, ignored: Union[list,bool]) -> [list, int]:
+                    limit: int, ignored: Union[list,bool]):
         """ selecting articles based on <name> ('department' or 'author')
 
         Args:
@@ -230,7 +230,7 @@ class Popularity_model_author(Popularity_model):
 
     @staticmethod
     def _select_if_userdb(art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
-                          limit: int, ignored: Union[list,bool]) -> [list, int]:
+                          limit: int, ignored: Union[list,bool]):
         """ recommend method for case <user in database>
 
         Args:
@@ -260,7 +260,7 @@ class Popularity_model_department(Popularity_model):
     
     @staticmethod
     def _select_if_userdb(art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
-                          limit: int, ignored: Union[list,bool]) -> [list, int]:
+                          limit: int, ignored: Union[list,bool]):
         """ recommend method for case <user in database>
 
         Args:
@@ -301,7 +301,7 @@ class Popularity_model_final(Popularity_model):
         self.w = w
 
     def _select_if_userdb(self, art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
-                          limit: int, ignored: Union[list,bool]) -> [list, tuple]:
+                          limit: int, ignored: Union[list,bool]):
         """ recommend method for case <user in database>
 
         Args:
