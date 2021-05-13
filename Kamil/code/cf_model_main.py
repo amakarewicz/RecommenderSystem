@@ -130,6 +130,7 @@ class CF_model(Recommendation_model):
                 for prediction in sorted_user_predictions
             ]
         else:
+            sorted_user_predictions = []
             recommendations_list = []
 
         if ev_return:

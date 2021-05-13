@@ -64,21 +64,23 @@ class Popularity_model(Recommendation_model):
         if user_db is None:
             user_db = self.user_db
 
-        if not ( (user_db is None) or (user_id not in user_db.user_id.values) ):
+        if user_db is None:
+            # user database is not given
+            recommended, ev = self._select_if_no_userdb(articles_db, limit, ignored)
+        elif user_id not in user_db.user_id.values:
+            # user not in user database
+            recommended, ev = self._select_if_no_userdb(articles_db, limit, ignored)
+        else:
             # user in user database
             recommended, ev = self._select_if_userdb(articles_db, user_db, user_id,
                                                      limit, ignored)
-        else:
-            # user not in user db or no db
-            recommended, ev = self._select_if_no_userdb(articles_db, limit, ignored)
-
         if ev_return == True:
             return recommended, ev
         return recommended    
 
     @staticmethod
     def _select_if_no_userdb(art_db: pd.DataFrame, limit: int,
-                             ignored: Union[list,bool] ):
+                             ignored: Union[list,bool] ) -> [list, int]:
         """ recommend method for case <user not in DB> and <DB is None> 
 
         Args:
@@ -122,17 +124,12 @@ class Popularity_model(Recommendation_model):
         
         # choosing by probability from ratio p.e. P((1, 2, 3)) = (1/6, 2/6, 3/6)
         recommended = choose_recomm(recomm_for_each,ratio,limit)
-
-        ev = []
-        for item in recommended:
-            score = art_db[art_db['nzz_id']==item][['popularity']]
-            ev.append(score.values[0][0]**(1/5))
-
-        return recommended, ev
+        
+        return recommended, 1
 
     @staticmethod
     def _select_if_userdb(art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
-                          limit: int, ignored: Union[list,bool]):
+                          limit: int, ignored: Union[list,bool]) -> [list, int]:
         """ recommend method for case <user in database>
 
         Args:
@@ -162,12 +159,12 @@ class Popularity_model(Recommendation_model):
                 .head(limit + len(ignored))['nzz_id'])
         # excluding ignored
         recommended = [item for item in selected if item not in ignored][:limit]
-
+        
         return recommended, 1
 
     @staticmethod
     def _key_select(name: str, art_db: pd.DataFrame, user_articles: list,
-                    limit: int, ignored: Union[list,bool]):
+                    limit: int, ignored: Union[list,bool]) -> [list, int]:
         """ selecting articles based on <name> ('department' or 'author')
 
         Args:
@@ -235,7 +232,7 @@ class Popularity_model_author(Popularity_model):
 
     @staticmethod
     def _select_if_userdb(art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
-                          limit: int, ignored: Union[list,bool]):
+                          limit: int, ignored: Union[list,bool]) -> [list, int]:
         """ recommend method for case <user in database>
 
         Args:
@@ -265,7 +262,7 @@ class Popularity_model_department(Popularity_model):
     
     @staticmethod
     def _select_if_userdb(art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
-                          limit: int, ignored: Union[list,bool]):
+                          limit: int, ignored: Union[list,bool]) -> [list, int]:
         """ recommend method for case <user in database>
 
         Args:
@@ -306,7 +303,7 @@ class Popularity_model_final(Popularity_model):
         self.w = w
 
     def _select_if_userdb(self, art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
-                          limit: int, ignored: Union[list,bool]):
+                          limit: int, ignored: Union[list,bool]) -> [list, tuple]:
         """ recommend method for case <user in database>
 
         Args:

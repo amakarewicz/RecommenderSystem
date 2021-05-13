@@ -63,7 +63,7 @@ def choose_recomm(
         return recommendations
 
 
-class Recommendation(Recommendation_model):
+class MergedModel(Recommendation_model):
 
     """final model selecting by probability from:
     popularity_model_final.recommend() results
@@ -93,7 +93,9 @@ class Recommendation(Recommendation_model):
         """
 
         super().__init__(articles_db, user_db)
-
+        self.m_colaborative = CF_model(
+            articles_db=self.articles_db, user_db=self.user_db
+        )
         self.w = w
 
     def recommend(
@@ -120,15 +122,13 @@ class Recommendation(Recommendation_model):
             articles_db=self.articles_db, user_db=self.user_db
         )
         sources = []
-        if (self.user_db is not None) and (user_id in self.user_db["user_id"]):
+        if not (self.user_db is None) or (user_id not in self.user_db["user_id"]):
             #
-            m_colaborative = CF_model(
-                articles_db=self.articles_db, user_db=self.user_db
-            )
+
             # m_content_based = content_based_model(articles_db = self.articles_db,
             #                                       user_dn = self.user_db)
 
-            models = [m_popularity, m_colaborative]
+            models = [m_popularity, self.m_colaborative]
             # user in user database
             recomm_for_each = []
             evaluations = []
@@ -145,10 +145,13 @@ class Recommendation(Recommendation_model):
                 )
                 sources.extend([(recomm, model.get_name()) for recomm in recommendation])
                 recomm_for_each.append(recommendation)
+                #if not isinstance(evaluation, list):
+                #    evaluation = [evaluation]
                 evaluations.append(evaluation)
             # choose using probability from given weights as ratio tuple, p.e. (1,2,3)
             recommended = choose_recomm(recomm_for_each, evaluations, limit, self.w)
         else:
+            print("elo")
             # user not in user database
             recommended = m_popularity.recommend(
                 user_id,
@@ -157,14 +160,8 @@ class Recommendation(Recommendation_model):
                 articles_db=self.articles_db,
                 user_db=self.user_db,
             )
-            sources.extend([(recomm, m_popularity.get_name()) for recomm in recommended])
-        
-        source_list = []
-        for recomm in recommended:
-            for nzz_id, source in sources:
-                if recomm == nzz_id:
-                    source_list.append(source)
-        print(f"sources: {source_list}")
+
+        #print(f"sources: {source_list}")
         return recommended
 
 
@@ -172,5 +169,5 @@ if __name__ == "__main__":
 
     art_db = get_db("art_clean_wt_all_popularity.csv")
     user_db = get_db("readers.csv")
-    m_merged = Recommendation(art_db, user_db, w=(1, 1))
+    m_merged = MergedModel(art_db, user_db, w=(1, 2))
     print(f"merged recommendations:{m_merged.recommend(user_id=1)}")
