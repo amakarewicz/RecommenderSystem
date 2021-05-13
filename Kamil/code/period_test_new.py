@@ -153,7 +153,7 @@ class period_eval:
         results_db = []
         coverage_items = [[] for x in range(len(limit))] # to find coverage
         # for each user and each number of articles
-        for i in tqdm(range(395,396)):
+        for i in tqdm(range(1,1001)):
             # getting articles read by user in first period
             user_articles_1 = self.user_articles(self.readers_1st_period, user_id = i)
             # getting articles read by user in second period
@@ -171,7 +171,7 @@ class period_eval:
             interactions = user_db[~((user_db["user_id"] == i) & (user_db["nzz_id"].isin(user_articles_2)))]
 
             #gettin recommendations
-            model = Model(articles_db=articles, user_db=interactions, w=(1, 2), **kwargs)
+            model = Model(articles_db=articles, user_db=interactions, w=(2, 3), **kwargs)
 
             for num, l in enumerate(limit):
                 recommended = model.recommend(user_id=i, limit=l,ignored=True)
