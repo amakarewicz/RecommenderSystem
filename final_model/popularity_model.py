@@ -64,7 +64,7 @@ class Popularity_model(Recommendation_model):
         if user_db is None:
             user_db = self.user_db
 
-        if not ( (user_db is None) and (user_id not in user_db.user_id.values) ):
+        if not ( (user_db is None) or (user_id not in user_db.user_id.values) ):
             # user in user database
             recommended, ev = self._select_if_userdb(articles_db, user_db, user_id,
                                                      limit, ignored)
@@ -122,8 +122,13 @@ class Popularity_model(Recommendation_model):
         
         # choosing by probability from ratio p.e. P((1, 2, 3)) = (1/6, 2/6, 3/6)
         recommended = choose_recomm(recomm_for_each,ratio,limit)
-        
-        return recommended, 1
+
+        ev = []
+        for item in recommended:
+            score = art_db[art_db['nzz_id']==item][['popularity']]
+            ev.append(score.values[0][0]**(1/5))
+
+        return recommended, ev
 
     @staticmethod
     def _select_if_userdb(art_db: pd.DataFrame, user_db: pd.DataFrame, user_id: int,
@@ -157,7 +162,7 @@ class Popularity_model(Recommendation_model):
                 .head(limit + len(ignored))['nzz_id'])
         # excluding ignored
         recommended = [item for item in selected if item not in ignored][:limit]
-        
+
         return recommended, 1
 
     @staticmethod
