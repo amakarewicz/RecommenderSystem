@@ -122,7 +122,7 @@ class MergedModel(Recommendation_model):
             articles_db=self.articles_db, user_db=self.user_db
         )
         sources = []
-        if (self.user_db is not None) and (user_id in self.user_db["user_id"]):
+        if not (self.user_db is None) or (user_id not in self.user_db["user_id"]):
             #
 
             # m_content_based = content_based_model(articles_db = self.articles_db,
