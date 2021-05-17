@@ -56,8 +56,9 @@ def choose_recomm(
                     ind = recommendations.index(rec)
                     all_evs[ind] += w_inner[i][j]
 
-        recommendations = [el for _, el in sorted(zip(all_evs, recommendations), reverse = True)][:limit]
-        return recommendations
+        recommendations = [el for _, el in sorted(zip(all_evs, recommendations), reverse = True)]
+        evs =[el for el, _ in sorted(zip(all_evs, recommendations), reverse = True)]
+        return recommendations, evs
 
 
 class MergedModelSum(Recommendation_model):
@@ -141,12 +142,20 @@ class MergedModelSum(Recommendation_model):
                     ev_return=True,
                 )
                 sources.extend([(recomm, model.get_name()) for recomm in recommendation])
-                recomm_for_each.append(recommendation)
+                recomm_for_each.append(recommendation) 
                 #if not isinstance(evaluation, list):
                 #    evaluation = [evaluation]
                 evaluations.append(evaluation)
             # choose using probability from given weights as ratio tuple, p.e. (1,2,3)
-            recommended = choose_recomm(recomm_for_each, evaluations, limit, self.w)
+            recommended, evs = choose_recomm(recomm_for_each, evaluations, limit, self.w)
+            print(recommended)
+            print(evs)
+            # tutaj filtrowanie podobnych
+            # 
+            # 
+            # (lista posortowanych artykułów)
+
+            recommended = recommended[:limit]
         else:
             # user not in user database or no db
             recommended = m_popularity.recommend(
@@ -163,12 +172,7 @@ class MergedModelSum(Recommendation_model):
 
 if __name__ == "__main__":
 
-    # art_db = get_db("art_clean_wt_all_popularity.csv")
-    # user_db = get_db("readers.csv")
-    # m_merged = MergedModel(art_db, user_db, w=(1, 2))
-    # print(f"merged recommendations:{m_merged.recommend(user_id=1)}")
-    recs = [['a','b','c'],['a','f','c'],['d','e','a']]
-    evs =  [[1,1,1],[1,1,1],[1,2,1]]
-    w = (1,1,1)
-    a = choose_recomm(recs,evs,5,w)
-    print(a)
+    art_db = get_db("art_clean_wt_all_popularity.csv")
+    user_db = get_db("readers.csv")
+    m_merged = MergedModelSum(art_db, user_db, w=(1, 2))
+    print(f"merged recommendations:{m_merged.recommend(user_id=1)}")
