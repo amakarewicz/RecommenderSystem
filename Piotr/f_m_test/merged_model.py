@@ -8,14 +8,15 @@ from popularity_model import Popularity_model_final
 from cf_model_main import CF_model
 
 
-def choose_recomm(models_recommendations: list, w_inner: list, limit: int,
-                  ratio: tuple = (1,1,1)) -> list:
+def choose_recomm(
+    models_recommendations: list, w_inner: list, limit: int, ratio: tuple = (1, 1, 1)
+) -> list:
 
-    """ function chosing for selected recommendations from the models, 
+    """function chosing for selected recommendations from the models,
         the results from each set according to probability.
 
     Args:
-        models_recommendations (list): list of lists of recommendations 
+        models_recommendations (list): list of lists of recommendations
                                        for each model - [[r11,r12,...],[r21,r22,...],...]
         ratio (tuple): default ratio for models
         limit (int): number of recommendations to return
@@ -27,20 +28,20 @@ def choose_recomm(models_recommendations: list, w_inner: list, limit: int,
     Returns:
         list: chosen recommendations according to probability taken from ratio
     """
-    if ( len(models_recommendations) != len(ratio) ) or ( len(w_inner) != len(ratio) ):
+    if (len(models_recommendations) != len(ratio)) or (len(w_inner) != len(ratio)):
         raise ValueError
-    
+
     # giving outter weight to inner weight
     for i, evs in enumerate(w_inner):
         w_inner[i] = list(np.array(evs) * ratio[i])
 
-    recommendations=[]
+    recommendations = []
 
     if sum([len(it) for it in models_recommendations]) <= limit:
         # case: no enough articles
         for it in models_recommendations:
             recommendations.extend([i for i in it])
-        return recommendations 
+        return recommendations
 
     else:
         while len(recommendations) < limit:
@@ -62,16 +63,19 @@ def choose_recomm(models_recommendations: list, w_inner: list, limit: int,
         return recommendations
 
 
-class Recommendation(Recommendation_model):
+class MergedModel(Recommendation_model):
 
-    """ final model selecting by probability from:
-        popularity_model_final.recommend() results
-        cf_model.recommend() results
-        content_based_model.recommend() results
+    """final model selecting by probability from:
+    popularity_model_final.recommend() results
+    cf_model.recommend() results
+    content_based_model.recommend() results
 
     """
 
-    def __init__(self, articles_db: pd.DataFrame, user_db: pd.DataFrame, w: tuple = (1,1,1)):
+    def __init__(
+        self, articles_db: pd.DataFrame, user_db: pd.DataFrame, w: tuple = (1, 1, 1)
+    ):
+
         """
         Args:
             articles_db (pd.DataFrame, optional): database of articles, containing for each:
@@ -83,16 +87,21 @@ class Recommendation(Recommendation_model):
                        [user_id, nzz_id].
                        Defaults to None.
 
-            w (tuple): weight for each of submodels: 
+            w (tuple): weight for each of submodels:
                        popularity, colaborative filtering, content based.
                        Defaults to None.
         """
-        super().__init__(articles_db,user_db)
+
+        super().__init__(articles_db, user_db)
+        self.m_colaborative = CF_model(
+            articles_db=self.articles_db, user_db=self.user_db
+        )
         self.w = w
 
+    def recommend(
+        self, user_id: int, limit: int = 5, ignored: Union[list, bool] = True
+    ) -> list:
 
-    def recommend(self, user_id: int, limit: int = 5, 
-                  ignored: Union[list, bool] = True) -> list:
         """recommend method, returning list of <limit> ID's recommended by model
 
         Args:
@@ -113,15 +122,13 @@ class Recommendation(Recommendation_model):
             articles_db=self.articles_db, user_db=self.user_db
         )
         sources = []
-        if (self.user_db is not None) and (user_id in self.user_db["user_id"]):
+        if not ((self.user_db is None) or (user_id not in self.user_db["user_id"].values)):
             #
-            m_colaborative = CF_model(
-                articles_db=self.articles_db, user_db=self.user_db
-            )
+
             # m_content_based = content_based_model(articles_db = self.articles_db,
             #                                       user_dn = self.user_db)
 
-            models = [m_popularity, m_colaborative]
+            models = [m_popularity, self.m_colaborative]
             # user in user database
             recomm_for_each = []
             evaluations = []
@@ -138,11 +145,13 @@ class Recommendation(Recommendation_model):
                 )
                 sources.extend([(recomm, model.get_name()) for recomm in recommendation])
                 recomm_for_each.append(recommendation)
+                #if not isinstance(evaluation, list):
+                #    evaluation = [evaluation]
                 evaluations.append(evaluation)
             # choose using probability from given weights as ratio tuple, p.e. (1,2,3)
             recommended = choose_recomm(recomm_for_each, evaluations, limit, self.w)
         else:
-            # user not in user database
+            # user not in user database or no db
             recommended = m_popularity.recommend(
                 user_id,
                 limit=limit,
@@ -150,20 +159,14 @@ class Recommendation(Recommendation_model):
                 articles_db=self.articles_db,
                 user_db=self.user_db,
             )
-            sources.extend([(recomm, m_popularity.get_name()) for recomm in recommended])
-        
-        source_list = []
-        for recomm in recommended:
-            for nzz_id, source in sources:
-                if recomm == nzz_id:
-                    source_list.append(source)
-        print(f"sources: {source_list}")
+
+        print(f"sources: {sources}")
         return recommended
 
 
 if __name__ == "__main__":
 
-    art_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\art_clean_wt_all_popularity.csv')
-    user_db = get_db(r'C:\Users\a814811\OneDrive - Atos\RecommenderSystem\readers.csv')
-    m_merged = Recommendation(art_db, user_db, w=(1, 1))
+    art_db = get_db("art_clean_wt_all_popularity.csv")
+    user_db = get_db("readers.csv")
+    m_merged = MergedModel(art_db, user_db, w=(1, 2))
     print(f"merged recommendations:{m_merged.recommend(user_id=1)}")

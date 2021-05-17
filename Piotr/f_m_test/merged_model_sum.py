@@ -1,11 +1,13 @@
 from numpy.lib.utils import source
-from some_functions import get_db, evaluation, prob_vector_from_ratio
 from abstract_model_class import Recommendation_model
 import pandas as pd
 import numpy as np
 from typing import Union
+from some_functions import get_db, evaluation, prob_vector_from_ratio
 from popularity_model import Popularity_model_final
 from cf_model_main import CF_model
+
+# to z sumowaniem jako wybór, o czym ola mówiła
 
 
 def choose_recomm(
@@ -44,26 +46,21 @@ def choose_recomm(
         return recommendations
 
     else:
-        while len(recommendations) < limit:
-            # probability for first items from each rec. list
-            vect = prob_vector_from_ratio([it[0] for it in w_inner])
+        all_evs = []
+        for i, item in enumerate(models_recommendations):
+            for j, rec in enumerate(item):
+                if rec not in recommendations:
+                    recommendations.append(rec)
+                    all_evs.append(w_inner[i][j])
+                else:
+                    ind = recommendations.index(rec)
+                    all_evs[ind] += w_inner[i][j]
 
-            # choosing the articles by probability
-            p = np.random.rand()
-            x = p > vect
-            ind = list(x).index(False)
-
-            if len(models_recommendations[ind]) > 0:
-                recommendations.append(models_recommendations[ind].pop(0))
-                w_inner[ind].pop(0)
-
-            if len(recommendations) != len(set(recommendations)):
-                # removing duplicates
-                recommendations = [it for it in set(recommendations)]
+        recommendations = [el for _, el in sorted(zip(all_evs, recommendations), reverse = True)][:limit]
         return recommendations
 
 
-class MergedModel(Recommendation_model):
+class MergedModelSum(Recommendation_model):
 
     """final model selecting by probability from:
     popularity_model_final.recommend() results
@@ -122,7 +119,7 @@ class MergedModel(Recommendation_model):
             articles_db=self.articles_db, user_db=self.user_db
         )
         sources = []
-        if not (self.user_db is None) or (user_id not in self.user_db["user_id"]):
+        if not ((self.user_db is None) or (user_id not in self.user_db["user_id"].values)):
             #
 
             # m_content_based = content_based_model(articles_db = self.articles_db,
@@ -137,7 +134,7 @@ class MergedModel(Recommendation_model):
                 # tutaj zmienic z wagami dla poszczególnego modelu
                 recommendation, evaluation = model.recommend(
                     user_id,
-                    limit=limit,
+                    limit=100,
                     ignored=ignored,
                     articles_db=self.articles_db,
                     user_db=self.user_db,
@@ -151,8 +148,7 @@ class MergedModel(Recommendation_model):
             # choose using probability from given weights as ratio tuple, p.e. (1,2,3)
             recommended = choose_recomm(recomm_for_each, evaluations, limit, self.w)
         else:
-            print("elo")
-            # user not in user database
+            # user not in user database or no db
             recommended = m_popularity.recommend(
                 user_id,
                 limit=limit,
@@ -161,13 +157,18 @@ class MergedModel(Recommendation_model):
                 user_db=self.user_db,
             )
 
-        #print(f"sources: {source_list}")
+        # print(f"sources: {sources}")
         return recommended
 
 
 if __name__ == "__main__":
 
-    art_db = get_db("art_clean_wt_all_popularity.csv")
-    user_db = get_db("readers.csv")
-    m_merged = MergedModel(art_db, user_db, w=(1, 2))
-    print(f"merged recommendations:{m_merged.recommend(user_id=1)}")
+    # art_db = get_db("art_clean_wt_all_popularity.csv")
+    # user_db = get_db("readers.csv")
+    # m_merged = MergedModel(art_db, user_db, w=(1, 2))
+    # print(f"merged recommendations:{m_merged.recommend(user_id=1)}")
+    recs = [['a','b','c'],['a','f','c'],['d','e','a']]
+    evs =  [[1,1,1],[1,1,1],[1,2,1]]
+    w = (1,1,1)
+    a = choose_recomm(recs,evs,5,w)
+    print(a)
