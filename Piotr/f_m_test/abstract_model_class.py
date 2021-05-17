@@ -11,8 +11,9 @@ class Recommendation_model(ABC):
     MODEL_NAME = "Recommendation_model"
 
     def __init__(self, articles_db: pd.DataFrame = None, user_db: pd.DataFrame = None,
-                 matrix: pd.DataFrame = None):
-        """ init
+                 matrix: pd.DataFrame = None, feature_names: np.array = None, similarity_model: object = None, 
+                            article_similarity: int = None, keyword_similarity: int = None):
+        """[summary]
 
         Args:
             articles_db (pd.DataFrame, optional): database of articles, containing for each:
@@ -22,12 +23,21 @@ class Recommendation_model(ABC):
             user_db (pd.DataFrame, optional): database of users and their read articles, containg:
                             [user_id, nzz_id].
                             Defaults to None.
-            matrix (?????, optional): matrix with cosine_similarities of articles. 
+            matrix (?????, optional): matrix of vectorized articles. 
                                       Defaults to None.
+            feature_names (np.array, optional): words and phrases corresponding to matrix columns . Defaults to None.
+            model (object, optional): fasttext model used for vectorization of articles' keywords. Defaults to None.
+            article_similarity (int, optional): level of similarity between articles (from (0,1) range). Defaults to None.
+            keyword_similarity (int, optional): level of similarity between keywords (from (0,1) range). Defaults to None.
         """
+
         self.articles_db = articles_db
         self.user_db = user_db
         self.matrix = matrix
+        self.feature_names = feature_names
+        self.similarity_model = similarity_model
+        self.article_similarity = article_similarity
+        self.keyword_similarity = keyword_similarity
 
     def get_name(self) -> str:
         """ method returning self.MODEL_NAME
@@ -51,17 +61,14 @@ class Recommendation_model(ABC):
         user_articles = user_db[user_db['user_id'] == user_id].iloc[:,1].tolist()   
         return user_articles
 
-    def filter_out_similar(self, person_recs: pd.DataFrame, feature_names: np.array, model: object, article_similarity: int, 
-                                                    keyword_similarity: int) -> pd.DataFrame:
+    def filter_out_similar(self, person_recs: pd.DataFrame): #, matrix: np.array, feature_names: np.array, model: object, 
+                            #article_similarity: int, keyword_similarity: int) -> pd.DataFrame:
         """
         method filtering out similar articles from recommendations for a given user_articles
         
         Args:
             person_recs (pd.DataFrame or list): recommendations for given user
             feature_names (np.array): elements (words) from dictionary created by vectorization
-            model (object): fasttext model used for vectorization of articles' keywords
-            article_similarity (int): level of similarity between articles (from (0,1) range)
-            keyword_similarity (int): level of similarity between keywords (from (0,1) range)
 
         Returns:
             pd.DataFrame or list of filtered recommendations for given user
@@ -80,7 +87,7 @@ class Recommendation_model(ABC):
         # extracting pairs of similar articles based on cosine similarities between vectors
         matrix_lower = np.tril(cosine_similarity(self.matrix[indices]))
         np.fill_diagonal(matrix_lower, 0)
-        similar_pairs = np.where(matrix_lower>=article_similarity)
+        similar_pairs = np.where(matrix_lower>=self.article_similarity)
         similar_df = pd.DataFrame(np.column_stack(similar_pairs),columns=['first_art','second_art'])
 
         # extracting keywords for each pair and computing similrity between them 
@@ -88,18 +95,18 @@ class Recommendation_model(ABC):
             for i in range(len(similar_df)):
                 id_1 = similar_df.loc[i,'first_art']
                 sorted_1 = np.argsort(self.matrix[id_1].data)[:-(5+1):-1]
-                key_1 = np.array(feature_names)[self.matrix[id_1].indices[sorted_1]]
+                key_1 = np.array(self.feature_names)[self.matrix[id_1].indices[sorted_1]]
                 id_2 = similar_df.loc[i,'second_art']
                 sorted_2 = np.argsort(self.matrix[id_2].data)[:-(5+1):-1]
-                key_2 = np.array(feature_names)[self.matrix[id_2].indices[sorted_2]]
+                key_2 = np.array(self.feature_names)[self.matrix[id_2].indices[sorted_2]]
                 
                 # vectorization of keywords
-                key_vec_1 = [model.get_word_vector(x) for x in key_1]
-                key_vec_2 = [model.get_word_vector(x) for x in key_2]
+                key_vec_1 = [self.similarity_model.get_word_vector(x) for x in key_1]
+                key_vec_2 = [self.similarity_model.get_word_vector(x) for x in key_2]
                 
                 # handling occurences of empty articles
-                if not key_vec_1: key_vec_1 = [model.get_word_vector('') for i in range(5)]
-                if not key_vec_2: key_vec_2 = [model.get_word_vector('') for i in range(5)]
+                if not key_vec_1: key_vec_1 = [self.similarity_model.get_word_vector('') for i in range(5)]
+                if not key_vec_2: key_vec_2 = [self.similarity_model.get_word_vector('') for i in range(5)]
 
                 key_vec_1_sum = [0]*300
                 key_vec_2_sum = [0]*300
@@ -112,7 +119,7 @@ class Recommendation_model(ABC):
                 similar_df.loc[i,'similarity'] = similarity[0][0]
 
             # filtering the recommendations
-            new_indices = [x for i, x in enumerate(indices) if i not in list(similar_df.loc[similar_df.similarity >= keyword_similarity, 'first_art'])]
+            new_indices = [x for i, x in enumerate(indices) if i not in list(similar_df.loc[similar_df.similarity >= self.keyword_similarity, 'first_art'])]
             filtered_recs_ind = self.articles_db.loc[new_indices, 'nzz_id']
 
             new_recs = person_recs.loc[person_recs.nzz_id.isin(list(filtered_recs_ind))]

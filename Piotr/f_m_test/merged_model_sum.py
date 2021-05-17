@@ -71,7 +71,8 @@ class MergedModelSum(Recommendation_model):
     """
 
     def __init__(
-        self, articles_db: pd.DataFrame, user_db: pd.DataFrame, w: tuple = (1, 1, 1)
+        self, articles_db: pd.DataFrame, user_db: pd.DataFrame, matrix: np.array, feature_names: np.array,
+        similarity_model: object, article_similarity: int = 0.5, keyword_similarity: int = 0.4, w: tuple = (1, 1, 1)
     ):
 
         """
@@ -90,7 +91,7 @@ class MergedModelSum(Recommendation_model):
                        Defaults to None.
         """
 
-        super().__init__(articles_db, user_db)
+        super().__init__(articles_db, user_db, matrix, feature_names, similarity_model, article_similarity, keyword_similarity)
         self.m_colaborative = CF_model(
             articles_db=self.articles_db, user_db=self.user_db
         )
@@ -148,12 +149,8 @@ class MergedModelSum(Recommendation_model):
                 evaluations.append(evaluation)
             # choose using probability from given weights as ratio tuple, p.e. (1,2,3)
             recommended, evs = choose_recomm(recomm_for_each, evaluations, limit, self.w)
-            print(recommended)
-            print(evs)
-            # tutaj filtrowanie podobnych
-            # 
-            # 
-            # (lista posortowanych artykułów)
+
+            recommended = self.filter_out_similar(recommended)
 
             recommended = recommended[:limit]
         else:
