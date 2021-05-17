@@ -218,7 +218,7 @@ if __name__ == "__main__":
     """
     
 
-    art_db = get_db(r'C:\Users\a814810\OneDrive - Atos\Documents\RecommenderSystem\Agata\data\articles_clean.csv')
+    art_db = get_db(r'C:\Users\a814810\OneDrive - Atos\Documents\RecommenderSystem\Agata\data\articles_lemmatized.csv')
     # shortened db
     #art_db = art_db[['nzz_id', 'author', 'department', 'pub_date', 'popularity']]
 
