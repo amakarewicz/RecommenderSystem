@@ -158,7 +158,7 @@ class period_eval:
         results_db = []
         coverage_items = [[] for x in range(len(limit))] # to find coverage
         # for each user and each number of articles
-        for i in range(394,410):
+        for i in tqdm(range(1,1001)):
             # getting articles read by user in first period
             user_articles_1 = self.user_articles(self.readers_1st_period, user_id = i)
             # getting articles read by user in second period
@@ -178,11 +178,26 @@ class period_eval:
             model = Model(articles_db=articles, user_db=interactions, **kwargs)
 
             for num, l in enumerate(limit):
-                recommended = model.recommend(user_id=i, limit=l, ignored=True, ev_return = True)
-                print(recommended)
-                # append recall and precision
+                recommended = model.recommend(user_id=i, limit=l, ignored=True)
+                coverage_items[num].extend(recommended)
 
-        return
+                # append recall and precision
+                pre, rec = precision(recommended,user_articles_2), recall(recommended,user_articles_2)
+                results_db.append([ model.get_name(),i,l,len(user_articles_1),
+                                    len(user_articles_2), pre, rec, f1score(pre,rec)
+                                     ])
+                                     
+        db = pd.DataFrame(results_db, columns=['model','user','number_of_recomm','train_articles',
+                                               'test_articles','precision','recall', 'f1score'])
+        
+        # mean() for each number of recommendations, for test art, train art > 2
+        short_results = db[(db['test_articles'] > 2) & (db['train_articles'] > 2)] \
+                        .groupby('number_of_recomm')[['precision','recall', 'f1score']] \
+                        .mean().reset_index()
+        coverage = [len(set(it)) / len(self.articles_2nd_period) for it in coverage_items]
+        short_results['coverage'] = coverage
+        
+        return short_results, db
 
 
 if __name__ == "__main__":

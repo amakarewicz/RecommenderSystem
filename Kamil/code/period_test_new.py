@@ -7,6 +7,7 @@ from cf_model_main import CF_model
 from datetime import datetime
 import os
 from tqdm import tqdm
+from merged_model import MergedModel
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 
@@ -69,7 +70,6 @@ def get_db(filename: str) -> pd.DataFrame:
     """
     return pd.read_csv(filename)
 
-
 @dataclass
 class period_eval:
     """ test evaluating models precision and recall.
@@ -118,7 +118,7 @@ class period_eval:
             art_db (pd.DataFrame): articles dataframe
             user_db (pd.DataFrame): user interactions dataframe
         """
-        sorted_art_db = art_db.sort_values(by='pub_date', ascending = not reversed)
+        sorted_art_db = art_db.sort_values(by='pub_date', ascending = not self.reverse)
 
         self.articles_1st_period = sorted_art_db[:round(len(art_db)/2)]
         self.articles_2nd_period = sorted_art_db[round(len(art_db)/2):]
@@ -171,7 +171,7 @@ class period_eval:
             interactions = user_db[~((user_db["user_id"] == i) & (user_db["nzz_id"].isin(user_articles_2)))]
 
             #gettin recommendations
-            model = Model(articles_db=articles, user_db=interactions, **kwargs)
+            model = Model(articles_db=articles, user_db=interactions, w=(2, 3), **kwargs)
 
             for num, l in enumerate(limit):
                 recommended = model.recommend(user_id=i, limit=l,ignored=True)
@@ -182,6 +182,16 @@ class period_eval:
                 results_db.append([ model.get_name(),i,l,len(user_articles_1),
                                     len(user_articles_2), pre, rec, f1score(pre,rec)
                                      ])
+            db = pd.DataFrame(results_db, columns=['model','user','number_of_recomm','train_articles',
+                                                   'test_articles','precision','recall', 'f1score'])
+            # mean() for each number of recommendations, for test art, train art > 2
+            short_results = db[(db['test_articles'] > 2) & (db['train_articles'] > 2)] \
+                            .groupby('number_of_recomm')[['precision','recall', 'f1score']] \
+                            .mean().reset_index()
+            coverage = [len(set(it)) / len(self.articles_2nd_period) for it in coverage_items]
+            short_results['coverage'] = coverage
+            print(short_results)
+
         db = pd.DataFrame(results_db, columns=['model','user','number_of_recomm','train_articles',
                                                'test_articles','precision','recall', 'f1score'])
         # mean() for each number of recommendations, for test art, train art > 2
@@ -201,14 +211,11 @@ if __name__ == "__main__":
     
 
     art_db = get_db("art_clean_wt_all_popularity.csv")
-    # shortened db
-    art_db = art_db[['nzz_id', 'author', 'department', 'pub_date', 'popularity']]
-
     user_db = get_db("readers.csv")
 
     x = period_eval(reverse=False)
     start = datetime.now()
-    s, r = x.evaluate_model( CF_model,
+    s, r = x.evaluate_model( MergedModel,
                              art_db, user_db, limit = [5, 10, 15] )
     end = datetime.now()
     print(f"evaluation time: {end-start}")
