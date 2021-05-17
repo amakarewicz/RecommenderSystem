@@ -134,7 +134,7 @@ class MergedModelSum(Recommendation_model):
                 # tutaj zmienic z wagami dla poszczególnego modelu
                 recommendation, evaluation = model.recommend(
                     user_id,
-                    limit=limit,
+                    limit=100,
                     ignored=ignored,
                     articles_db=self.articles_db,
                     user_db=self.user_db,
